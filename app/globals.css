@@ -1,26 +1,151 @@
 @import "tailwindcss";
 
-:root {
-  --background: #ffffff;
-  --foreground: #171717;
+/* ============================================================================
+   DL-BJJ — SISTEMA DE DESIGN
+   Cores retiradas diretamente do logótipo oficial (amostragem de píxeis):
+     Vermelho  #ED1C24  — o "D" do monograma e a faixa vermelha
+     Preto     #231F20  — o "L", o texto e a faixa preta
+   ============================================================================ */
+
+@theme {
+  /* -- Vermelho DL ------------------------------------------------------- */
+  --color-dl-red: #ed1c24;
+  --color-dl-red-hover: #cc1319;
+  --color-dl-red-dark: #a30f14;
+
+  /* -- Pretos DL --------------------------------------------------------- */
+  --color-dl-black: #231f20;
+  --color-dl-ink: #171415;
+  --color-dl-void: #0d0b0c;
+  --color-dl-coal: #2e2a2b;
+  --color-dl-smoke: #3a3536;
+
+  /* -- Neutros ----------------------------------------------------------- */
+  --color-dl-bone: #f7f5f4;
+  --color-dl-ash: #a8a2a3;
+  --color-dl-steel: #6b6465;
+
+  /* -- Tipografia -------------------------------------------------------- */
+  --font-display: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
+  --font-sans: var(--font-inter), system-ui, sans-serif;
+
+  /* -- Animações --------------------------------------------------------- */
+  --animate-marquee: marquee 45s linear infinite;
 }
 
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --background: #0a0a0a;
-    --foreground: #ededed;
+@keyframes marquee {
+  from {
+    transform: translateX(0);
   }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+/* ============================================================================
+   BASE
+   ============================================================================ */
+
+:root {
+  --background: var(--color-dl-ink);
+  --foreground: var(--color-dl-bone);
+}
+
+html {
+  scroll-behavior: smooth;
+  /* Compensa a navbar fixa ao saltar para uma âncora */
+  scroll-padding-top: 5.5rem;
 }
 
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: var(--font-sans);
+  -webkit-font-smoothing: antialiased;
+}
+
+::selection {
+  background: var(--color-dl-red);
+  color: #fff;
+}
+
+/* Foco visível e consistente (acessibilidade) */
+:focus-visible {
+  outline: 2px solid var(--color-dl-red);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}
+
+/* ============================================================================
+   UTILITÁRIOS
+   ============================================================================ */
+
+@utility container-dl {
+  width: 100%;
+  margin-inline: auto;
+  max-width: 80rem;
+  padding-inline: 1.25rem;
+
+  @media (width >= 768px) {
+    padding-inline: 2rem;
+  }
+}
+
+/* Títulos display: condensado, maiúsculas, apertado */
+@utility h-display {
+  font-family: var(--font-display);
+  font-weight: 800;
+  text-transform: uppercase;
+  line-height: 0.92;
+  letter-spacing: -0.01em;
+}
+
+/* Etiqueta pequena vermelha acima dos títulos */
+@utility eyebrow {
+  font-family: var(--font-display);
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.2em;
+  font-size: 0.8125rem;
+  color: var(--color-dl-red);
+}
+
+/* Textura de tijolo subtil, herdada da identidade atual */
+@utility textura-tijolo {
+  background-image: url("/brand/textura.jpg");
+  background-size: 620px;
+  background-position: center;
+}
+
+/* Esconde a barra de scroll (usado na "volta pelos espaços") */
+@utility no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+  &::-webkit-scrollbar {
+    display: none;
+  }
+}
+
+/* Faixa diagonal vermelha — evoca a faixa do logótipo */
+@utility faixa-diagonal {
+  background-image: repeating-linear-gradient(
+    -45deg,
+    var(--color-dl-red) 0px,
+    var(--color-dl-red) 2px,
+    transparent 2px,
+    transparent 9px
+  );
 }
