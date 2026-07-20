@@ -55,26 +55,18 @@ export function Nav() {
           {/* Logótipo */}
           <Link
             href="/"
-            className="flex shrink-0 items-center gap-3"
+            className="flex shrink-0 items-center"
             aria-label={`${marca.nome} — início`}
           >
             <Image
-              src="/brand/logo.png"
-              alt=""
-              width={44}
-              height={44}
-              className="h-11 w-11 object-contain"
+              src="/brand/wordmark.png"
+              alt={marca.nome}
+              width={1600}
+              height={452}
+              className="h-8 w-auto sm:h-9"
               loading="eager"
               fetchPriority="high"
             />
-            <span className="hidden sm:block">
-              <span className="h-display text-dl-bone block text-lg leading-none">
-                Academia <span className="text-dl-red">DL</span>-BJJ
-              </span>
-              <span className="text-dl-ash mt-0.5 block text-[0.6875rem] font-medium tracking-[0.18em] uppercase">
-                Brazilian Jiu-Jitsu
-              </span>
-            </span>
           </Link>
 
           {/* Links — desktop */}
@@ -129,11 +121,11 @@ export function Nav() {
             <div className="relative flex h-full flex-col">
               <div className="container-dl flex h-20 shrink-0 items-center justify-between">
                 <Image
-                  src="/brand/logo.png"
-                  alt=""
-                  width={44}
-                  height={44}
-                  className="h-11 w-11 object-contain"
+                  src="/brand/wordmark.png"
+                  alt={marca.nome}
+                  width={1600}
+                  height={452}
+                  className="h-8 w-auto"
                 />
                 <button
                   type="button"

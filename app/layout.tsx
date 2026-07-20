@@ -37,8 +37,8 @@ export const metadata: Metadata = {
     images: [
       {
         url: "/brand/logo.png",
-        width: 1024,
-        height: 1024,
+        width: 1191,
+        height: 1191,
         alt: `Logótipo da ${marca.nome}`,
       },
     ],

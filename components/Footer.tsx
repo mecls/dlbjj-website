@@ -15,23 +15,13 @@ export function Footer() {
         <div className="grid gap-12 md:grid-cols-2 lg:grid-cols-4">
           {/* Marca */}
           <div className="lg:col-span-1">
-            <div className="flex items-center gap-3">
-              <Image
-                src="/brand/logo.png"
-                alt=""
-                width={52}
-                height={52}
-                className="h-13 w-13 object-contain"
-              />
-              <div>
-                <p className="h-display text-dl-bone text-lg leading-none">
-                  Academia <span className="text-dl-red">DL</span>-BJJ
-                </p>
-                <p className="text-dl-steel mt-1 text-[0.6875rem] font-medium tracking-[0.18em] uppercase">
-                  Brazilian Jiu-Jitsu
-                </p>
-              </div>
-            </div>
+            <Image
+              src="/brand/wordmark.png"
+              alt={marca.nome}
+              width={1600}
+              height={452}
+              className="h-10 w-auto"
+            />
 
             <p className="text-dl-ash mt-5 text-sm leading-relaxed italic">
               &ldquo;{marca.lema}&rdquo;
