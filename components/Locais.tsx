@@ -10,7 +10,7 @@ export function Locais() {
         <Revelar className="max-w-2xl">
           <p className="eyebrow">Onde estamos</p>
           <h2 className="h-display text-dl-bone mt-4 text-5xl sm:text-6xl">
-            Dois tatames, uma família
+            Três tatames, uma família
           </h2>
           <p className="text-dl-ash mt-5 text-base leading-relaxed sm:text-lg">
             Apareça sem marcação ou avise-nos antes — quem chega é sempre bem
@@ -18,7 +18,7 @@ export function Locais() {
           </p>
         </Revelar>
 
-        <div className="mt-14 grid gap-5 md:grid-cols-2">
+        <div className="mt-14 grid gap-5 md:grid-cols-2 lg:grid-cols-3">
           {locais.map((local, i) => (
             <Revelar key={local.id} atraso={i * 0.1} className="h-full">
               <article className="border-dl-coal bg-dl-black flex h-full flex-col overflow-hidden rounded-sm border">

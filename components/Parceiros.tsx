@@ -1,6 +1,7 @@
 import Image from "next/image";
 import { Revelar } from "@/components/ui/Revelar";
 import { parceiros } from "@/content/site";
+import { cn } from "@/lib/utils";
 
 export function Parceiros() {
   return (
@@ -11,26 +12,47 @@ export function Parceiros() {
             Parceiros
           </p>
 
-          <ul className="mt-9 flex flex-wrap items-center justify-center gap-x-12 gap-y-8 sm:gap-x-20">
-            {parceiros.map((parceiro) => (
-              <li key={parceiro.nome}>
-                <a
-                  href={parceiro.url}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="block opacity-45 grayscale transition-all duration-300 hover:opacity-100 hover:grayscale-0"
-                  aria-label={parceiro.nome}
-                >
+          <ul className="mt-9 flex flex-wrap items-center justify-center gap-4">
+            {parceiros.map((parceiro) => {
+              const cartao = cn(
+                "flex h-24 w-40 items-center justify-center rounded-lg border p-4 transition-all duration-300 hover:scale-105",
+                parceiro.fundo === "escuro"
+                  ? "border-white/10 bg-dl-void"
+                  : "border-black/5 bg-white hover:shadow-lg hover:shadow-black/25",
+              );
+
+              const logo = (
+                <span className="relative block h-full w-full">
                   <Image
                     src={parceiro.logo}
                     alt={parceiro.nome}
-                    width={140}
-                    height={70}
-                    className="h-14 w-auto object-contain sm:h-16"
+                    fill
+                    sizes="160px"
+                    className="object-contain"
                   />
-                </a>
-              </li>
-            ))}
+                </span>
+              );
+
+              return (
+                <li key={parceiro.nome}>
+                  {parceiro.url ? (
+                    <a
+                      href={parceiro.url}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                      className={cartao}
+                      aria-label={parceiro.nome}
+                    >
+                      {logo}
+                    </a>
+                  ) : (
+                    <div className={cartao} aria-label={parceiro.nome}>
+                      {logo}
+                    </div>
+                  )}
+                </li>
+              );
+            })}
           </ul>
         </Revelar>
       </div>

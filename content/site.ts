@@ -218,11 +218,9 @@ export const locais: Local[] = [
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12445.492612926973!2d-9.267472101573189!3d38.7551445461482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1f37b3d9be0d51%3A0x2e4cdb4b737859ae!2sAcademia%20dl%20bjj%20queluz!5e0!3m2!1spt-PT!2spt!4v1784370554826!5m2!1spt-PT!2spt",
     foto: null,
     aulas: [
-      { turma: "Mirim 1, 2, 3", dias: "Terça e Quinta", horario: "18:30 – 19:30", tipo: "kids" },
-      { turma: "Infantil – Juvenil", dias: "Terça e Quinta", horario: "19:30 – 20:30", tipo: "kids" },
-      { turma: "MMA", dias: "Terça e Quinta", horario: "20:30 – 22:00", tipo: "mma" },
-      { turma: "Misto (Mirim, Infantil e Juvenil)", dias: "Sábado", horario: "10:00 – 11:00", tipo: "misto" },
-      { turma: "MMA", dias: "Sábado", horario: "11:00 – 12:00", tipo: "mma" },
+      { turma: "Kids", dias: "Terça e Quinta", horario: "18:30", tipo: "kids" },
+      { turma: "Kids", dias: "Sábado", horario: "10:00", tipo: "kids" },
+      { turma: "Jiu-Jitsu (Adultos)", dias: "Terça, Quarta e Sexta", horario: "20:00", tipo: "jiu-jitsu" },
     ],
   },
   {
@@ -235,7 +233,28 @@ export const locais: Local[] = [
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d12445.492612926973!2d-9.267472101573189!3d38.7551445461482!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1ecd8e1ff8f137%3A0x6e452180255deacc!2sACADEMIA%20DL%20BJJ%20001-%20CASAL%20DE%20S%C3%83O%20BR%C3%81S!5e0!3m2!1spt-PT!2spt!4v1784370580078!5m2!1spt-PT!2spt",
     foto: null,
     aulas: [
-      { turma: "Jiu-Jitsu", dias: "Segunda a Sexta", horario: "20:30 – 22:00", tipo: "jiu-jitsu" },
+      { turma: "Jiu-Jitsu", dias: "Segunda, Quarta e Sexta", horario: "06:00", tipo: "jiu-jitsu" },
+      { turma: "Jiu-Jitsu", dias: "Segunda, Quarta e Sexta", horario: "11:00", tipo: "jiu-jitsu" },
+      { turma: "Jiu-Jitsu", dias: "Segunda e Quarta", horario: "19:30", tipo: "jiu-jitsu" },
+      { turma: "Jiu-Jitsu", dias: "Segunda e Quarta", horario: "20:30", tipo: "jiu-jitsu" },
+      { turma: "MMA (Adultos)", dias: "Segunda, Quarta e Sexta", horario: "18:30", tipo: "mma" },
+      { turma: "MMA (Adultos)", dias: "Terça e Quinta", horario: "11:00", tipo: "mma" },
+      { turma: "Jiu-Jitsu", dias: "Terça e Quinta", horario: "20:00", tipo: "jiu-jitsu" },
+      { turma: "Treino Livre (Gi e NoGi)", dias: "Sexta-feira", horario: "20:00", tipo: "misto" },
+    ],
+  },
+  {
+    id: "bjj-kids",
+    nome: "BJJ Kids",
+    morada: "R. Ordem Militar do Hospital 3B/3C, 2700-625 Amadora",
+    mapsUrl:
+      "https://www.google.com/maps/dir/?api=1&destination=ACADEMIA%20DL%20BJJ%20KIDS%20Casal%20de%20S%C3%A3o%20Br%C3%A1s",
+    mapsEmbed:
+      "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3110.922692681144!2d-9.2296636!3d38.7654771!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1ecdf99b6a7b1b%3A0xdd13ed47df4c4b1a!2sACADEMIA%20DL%20BJJ%20KIDS%20-%20CASAL%20DE%20S%C3%83O%20BR%C3%81S!5e0!3m2!1spt-PT!2spt!4v1784551527871!5m2!1spt-PT!2spt",
+    foto: null,
+    aulas: [
+      { turma: "Kids", dias: "Terça e Quinta", horario: "18:30", tipo: "kids" },
+      { turma: "Kids", dias: "Sábado", horario: "10:00", tipo: "kids" },
     ],
   },
 ];
@@ -379,11 +398,24 @@ export const espacos: Espaco[] = [
 
 /* -------------------------------------------------------------- PARCEIROS */
 
-export const parceiros = [
-  { nome: "Bom Café", logo: "/parceiros/bomcafe.png", url: "https://www.instagram.com/bomcafe_1/" },
-  { nome: "Croissant de Viena", logo: "/parceiros/croissant-viena.png", url: "https://instagram.com/croissant_de_viena" },
-  { nome: "GC Estrelas da Amadora", logo: "/parceiros/estrelas-amadora.png", url: "https://instagram.com/gc_estrelasdaamadora" },
-] as const;
+export type Parceiro = {
+  nome: string;
+  logo: string;
+  /** Link (Instagram/site). `null` = logótipo não clicável. */
+  url: string | null;
+  /** Fundo do cartão do logótipo: "claro" (branco) ou "escuro". */
+  fundo: "claro" | "escuro";
+};
+
+export const parceiros: Parceiro[] = [
+  { nome: "Bom Café", logo: "/parceiros/bomcafe.png", url: "https://www.instagram.com/bomcafe_1/", fundo: "claro" },
+  { nome: "Croissant de Viena", logo: "/parceiros/croissant-viena.png", url: "https://instagram.com/croissant_de_viena", fundo: "claro" },
+  { nome: "GC Estrelas da Amadora", logo: "/parceiros/estrelas-amadora.png", url: "https://instagram.com/gc_estrelasdaamadora", fundo: "claro" },
+  { nome: "XXL Burguer", logo: "/parceiros/xxl-burguer.png", url: null, fundo: "claro" },
+  { nome: "A Palhota Grelhados", logo: "/parceiros/palhota.jpg", url: null, fundo: "claro" },
+  { nome: "Unhas Bibi Estética", logo: "/parceiros/bibi.jpg", url: null, fundo: "claro" },
+  { nome: "SimpleCloud", logo: "/parceiros/simplecloud.jpg", url: null, fundo: "escuro" },
+];
 
 /* ------------------------------------------------------------- NAVEGAÇÃO */
 
@@ -419,6 +451,9 @@ export const seo = {
     "Brazilian Jiu-Jitsu Sintra",
     "artes marciais Queluz",
     "jiu-jitsu para crianças",
+    "jiu-jitsu crianças Amadora",
+    "BJJ kids Amadora",
+    "jiu-jitsu Amadora",
     "defesa pessoal Queluz",
     "MMA Queluz",
     "Academia Daniel Lopes",
