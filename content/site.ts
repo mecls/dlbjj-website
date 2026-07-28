@@ -195,9 +195,21 @@ export type Aula = {
 
 export type Local = {
   id: string;
+  /** Usado no URL da página do local (ex.: /queluz). */
+  slug: string;
   nome: string;
-  /** Morada completa (rua, número, código postal, localidade). */
+  /** Morada completa (rua, número, código postal, localidade) para exibição. */
   morada: string | null;
+  /** Componentes da morada, para os dados estruturados (JSON-LD). */
+  rua: string;
+  codigoPostal: string;
+  localidade: string;
+  coordenadas: { lat: number; lng: number };
+  /** IDs de programas (ver `programas`) que funcionam neste local. */
+  programas: string[];
+  /** SEO da página do local — título e descrição únicos. */
+  seoTitulo: string;
+  seoDescricao: string;
   /** Link do Google Maps para o botão "Como chegar". */
   mapsUrl: string | null;
   /** URL de embed do Google Maps (Partilhar › Incorporar um mapa). */
@@ -207,10 +219,26 @@ export type Local = {
   aulas: Aula[];
 };
 
+/**
+ * Horas de funcionamento das instalações (fornecidas pela academia: 06:00–22:00).
+ * Usadas no openingHoursSpecification dos dados estruturados, aplicadas aos dias
+ * em que cada local tem aulas.
+ */
+export const horarioFuncionamento = { abre: "06:00", fecha: "22:00" } as const;
+
 export const locais: Local[] = [
   {
     id: "queluz",
+    slug: "queluz",
     nome: "Queluz",
+    rua: "Av. da República 97",
+    codigoPostal: "2745-213",
+    localidade: "Queluz",
+    coordenadas: { lat: 38.7553468, lng: -9.2555377 },
+    programas: ["jiu-jitsu"],
+    seoTitulo: "Jiu-Jitsu em Queluz — Academia DL-BJJ",
+    seoDescricao:
+      "Aulas de Jiu-Jitsu para crianças e adultos em Queluz (Av. da República). Turmas de kids e de adultos, primeira aula grátis. Academia Daniel Lopes.",
     morada: "Av. da República 97, 2745-213 Queluz",
     mapsUrl:
       "https://www.google.com/maps/dir/?api=1&destination=Academia%20DL%20BJJ%20Queluz",
@@ -225,7 +253,16 @@ export const locais: Local[] = [
   },
   {
     id: "sao-bras",
+    slug: "sao-bras",
     nome: "São Brás",
+    rua: "R. Camilo Pessanha 2A esquerdo",
+    codigoPostal: "2700-139",
+    localidade: "Amadora",
+    coordenadas: { lat: 38.7690646, lng: -9.2342068 },
+    programas: ["jiu-jitsu", "mma", "nogi"],
+    seoTitulo: "Jiu-Jitsu, MMA e NoGi em Casal de São Brás (Amadora) — DL-BJJ",
+    seoDescricao:
+      "Jiu-Jitsu, MMA e treino livre Gi/NoGi em Casal de São Brás, Amadora. Aulas de manhã e à noite para todos os níveis. Primeira aula grátis na Academia DL-BJJ.",
     morada: "R. Camilo Pessanha 2A esquerdo, 2700-139 Amadora",
     mapsUrl:
       "https://www.google.com/maps/dir/?api=1&destination=Academia%20DL%20BJJ%20Casal%20de%20S%C3%A3o%20Br%C3%A1s",
@@ -245,7 +282,16 @@ export const locais: Local[] = [
   },
   {
     id: "bjj-kids",
+    slug: "kids-amadora",
     nome: "BJJ Kids",
+    rua: "R. Ordem Militar do Hospital 3B/3C",
+    codigoPostal: "2700-625",
+    localidade: "Amadora",
+    coordenadas: { lat: 38.7654771, lng: -9.2296636 },
+    programas: ["jiu-jitsu"],
+    seoTitulo: "Jiu-Jitsu para Crianças em Amadora — DL-BJJ Kids",
+    seoDescricao:
+      "Jiu-Jitsu para crianças em Casal de São Brás, Amadora. Espaço dedicado aos mais novos, num ambiente seguro. Primeira aula grátis na Academia DL-BJJ Kids.",
     morada: "R. Ordem Militar do Hospital 3B/3C, 2700-625 Amadora",
     mapsUrl:
       "https://www.google.com/maps/dir/?api=1&destination=ACADEMIA%20DL%20BJJ%20KIDS%20Casal%20de%20S%C3%A3o%20Br%C3%A1s",
@@ -258,6 +304,11 @@ export const locais: Local[] = [
     ],
   },
 ];
+
+/** Encontra um local pelo slug (usado nas páginas /queluz, /sao-bras, ...). */
+export function localPorSlug(slug: string): Local | undefined {
+  return locais.find((l) => l.slug === slug);
+}
 
 /* ----------------------------------------------------------------- PREÇOS */
 
@@ -411,19 +462,19 @@ export const parceiros: Parceiro[] = [
   { nome: "Bom Café", logo: "/parceiros/bomcafe.png", url: "https://www.instagram.com/bomcafe_1/", fundo: "claro" },
   { nome: "Croissant de Viena", logo: "/parceiros/croissant-viena.png", url: "https://instagram.com/croissant_de_viena", fundo: "claro" },
   { nome: "GC Estrelas da Amadora", logo: "/parceiros/estrelas-amadora.png", url: "https://instagram.com/gc_estrelasdaamadora", fundo: "claro" },
-  { nome: "XXL Burguer", logo: "/parceiros/xxl-burguer.png", url: null, fundo: "claro" },
-  { nome: "A Palhota Grelhados", logo: "/parceiros/palhota.jpg", url: null, fundo: "claro" },
-  { nome: "Unhas Bibi Estética", logo: "/parceiros/bibi.jpg", url: null, fundo: "claro" },
-  { nome: "SimpleCloud", logo: "/parceiros/simplecloud.jpg", url: null, fundo: "escuro" },
+  { nome: "XXL Burguer", logo: "/parceiros/xxl-burguer.png", url: "https://www.instagram.com/xxlburguer/", fundo: "claro" },
+  { nome: "A Palhota Grelhados", logo: "/parceiros/palhota.jpg", url: "https://www.instagram.com/apalhota/", fundo: "claro" },
+  { nome: "Unhas Bibi Estética", logo: "/parceiros/bibi.jpg", url: "https://www.instagram.com/bibi_unhasestetica/", fundo: "claro" },
+  { nome: "SimpleCloud", logo: "/parceiros/simplecloud.jpg", url: "https://www.instagram.com/simplecloudlda/", fundo: "escuro" },
 ];
 
 /* ------------------------------------------------------------- NAVEGAÇÃO */
 
 export const navegacao = [
-  { label: "A Academia", href: "#academia" },
-  { label: "Programas", href: "#programas" },
-  { label: "Espaços", href: "#espacos" },
-  { label: "Locais", href: "#locais" },
+  { label: "A Academia", href: "/#academia" },
+  { label: "Programas", href: "/#programas" },
+  { label: "Espaços", href: "/#espacos" },
+  { label: "Locais", href: "/#locais" },
 ] as const;
 
 /* ------------------------------------------------------------- CTA FINAL */
@@ -442,8 +493,8 @@ export const seo = {
   titulo: "Academia DL-BJJ — Jiu-Jitsu Brasileiro em Queluz e São Brás",
   descricao:
     `Academia de Jiu-Jitsu Brasileiro em Queluz e São Brás desde ${marca.fundadaEm}. Aulas para crianças, jovens e adultos. Honra, Disciplina, Hierarquia. Primeira aula grátis.`,
-  /** TODO: SEO — trocar pelo domínio final quando estiver decidido. */
-  url: "https://dlbjj.pt",
+  /** Domínio principal (o apex dlbjj.org redireciona 308 para www). */
+  url: "https://www.dlbjj.org",
   palavrasChave: [
     "jiu-jitsu Queluz",
     "BJJ Queluz",

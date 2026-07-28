@@ -15,7 +15,7 @@ export function Parceiros() {
           <ul className="mt-9 flex flex-wrap items-center justify-center gap-4">
             {parceiros.map((parceiro) => {
               const cartao = cn(
-                "flex h-24 w-40 items-center justify-center rounded-lg border p-4 transition-all duration-300 hover:scale-105",
+                "flex h-28 w-48 items-center justify-center rounded-lg border p-3 transition-all duration-300 hover:scale-105",
                 parceiro.fundo === "escuro"
                   ? "border-white/10 bg-dl-void"
                   : "border-black/5 bg-white hover:shadow-lg hover:shadow-black/25",
@@ -27,7 +27,7 @@ export function Parceiros() {
                     src={parceiro.logo}
                     alt={parceiro.nome}
                     fill
-                    sizes="160px"
+                    sizes="192px"
                     className="object-contain"
                   />
                 </span>

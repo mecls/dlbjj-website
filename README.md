@@ -95,7 +95,7 @@ Para repor uma delas: voltar a importá-la e a renderizá-la em `app/page.tsx`, 
 
 ---
 
-## O que melhora face ao site atual (dlbjj.pt)
+## O que melhora face ao site antigo
 
 - **Botão "Aula grátis" que converte**: abre o WhatsApp (925 797 266) com uma
   mensagem já escrita, em vez de não levar a lado nenhum.
@@ -118,6 +118,6 @@ vercel            # pré-visualização
 vercel --prod     # produção
 ```
 
-Depois é só apontar o domínio `dlbjj.pt` para o projeto na Vercel.
+Depois é só apontar o domínio `www.dlbjj.org` para o projeto na Vercel.
 Antes de publicar, atualizar `seo.url` em `content/site.ts` com o domínio final.
 # dlbjj-website

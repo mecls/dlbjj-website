@@ -3,6 +3,7 @@ import { CtaFinal } from "@/components/CtaFinal";
 import { Espacos } from "@/components/Espacos";
 import { Footer } from "@/components/Footer";
 import { Hero } from "@/components/Hero";
+import { JsonLd } from "@/components/JsonLd";
 import { Locais } from "@/components/Locais";
 import { Nav } from "@/components/Nav";
 import { Parceiros } from "@/components/Parceiros";
@@ -11,10 +12,12 @@ import { Sobre } from "@/components/Sobre";
 import { Testemunhos } from "@/components/Testemunhos";
 import { Valores } from "@/components/Valores";
 import { WhatsAppFlutuante } from "@/components/WhatsAppFlutuante";
+import { organizationJsonLd } from "@/lib/schema";
 
 export default function Home() {
   return (
     <>
+      <JsonLd data={organizationJsonLd()} />
       <Nav />
 
       <main id="conteudo" className="flex-1">

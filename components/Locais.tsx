@@ -1,5 +1,6 @@
 import Image from "next/image";
-import { Clock, MapPin, Navigation, Phone } from "lucide-react";
+import Link from "next/link";
+import { ArrowRight, Clock, MapPin, Navigation, Phone } from "lucide-react";
 import { Revelar } from "@/components/ui/Revelar";
 import { contactos, locais } from "@/content/site";
 
@@ -60,7 +61,15 @@ export function Locais() {
                 {/* Detalhes */}
                 <div className="relative flex flex-1 flex-col p-7">
                   <div className="bg-dl-red absolute top-0 left-7 h-1 w-12 -translate-y-1/2" />
-                  <h3 className="h-display text-dl-bone text-3xl">{local.nome}</h3>
+                  <Link
+                    href={`/${local.slug}`}
+                    className="group/title inline-flex items-center gap-2"
+                  >
+                    <h3 className="h-display text-dl-bone group-hover/title:text-dl-red text-3xl transition-colors">
+                      {local.nome}
+                    </h3>
+                    <ArrowRight className="text-dl-red h-5 w-5 transition-transform group-hover/title:translate-x-1" />
+                  </Link>
 
                   {local.morada ? (
                     <p className="text-dl-ash mt-3 flex items-start gap-2.5 text-sm">
@@ -91,6 +100,15 @@ export function Locais() {
                       </li>
                     ))}
                   </ul>
+
+                  {/* Página do local */}
+                  <Link
+                    href={`/${local.slug}`}
+                    className="group text-dl-red font-display mt-6 inline-flex items-center gap-2 text-sm font-bold tracking-[0.1em] uppercase transition-colors hover:text-white"
+                  >
+                    Ver horários e mapa
+                    <ArrowRight className="h-3.5 w-3.5 transition-transform group-hover:translate-x-1" />
+                  </Link>
 
                   {/* Ações */}
                   <div className="border-dl-coal mt-6 flex flex-wrap gap-3 border-t pt-6">

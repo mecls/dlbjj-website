@@ -1,6 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { Barlow_Condensed, Inter } from "next/font/google";
-import { contactos, locais, marca, seo } from "@/content/site";
+import { marca, seo } from "@/content/site";
 import "./globals.css";
 
 /* Barlow Condensed não é variable font — os pesos têm de ser explícitos. */
@@ -24,7 +24,6 @@ export const metadata: Metadata = {
     template: `%s | ${marca.nome}`,
   },
   description: seo.descricao,
-  keywords: [...seo.palavrasChave],
   authors: [{ name: marca.nomeCompleto }],
   alternates: { canonical: "/" },
   openGraph: {
@@ -57,54 +56,6 @@ export const viewport: Viewport = {
   colorScheme: "dark",
 };
 
-/**
- * Dados estruturados (JSON-LD). Ajuda o Google a mostrar a academia nas
- * pesquisas locais e no Maps — algo que o site atual não tem de todo.
- * As moradas são preenchidas automaticamente a partir de content/site.ts.
- */
-function DadosEstruturados() {
-  const jsonLd = {
-    "@context": "https://schema.org",
-    "@type": "SportsActivityLocation",
-    name: marca.nomeCompleto,
-    alternateName: marca.nomeCurto,
-    description: seo.descricao,
-    url: seo.url,
-    logo: `${seo.url}/brand/logo.png`,
-    image: `${seo.url}/brand/logo.png`,
-    telephone: contactos.telefoneInternacional,
-    email: contactos.email,
-    foundingDate: String(marca.fundadaEm),
-    slogan: marca.lema,
-    sameAs: [contactos.instagram, contactos.facebook],
-    areaServed: locais.map((l) => ({ "@type": "Place", name: l.nome })),
-    location: locais.map((l) => ({
-      "@type": "Place",
-      name: `${marca.nomeCurto} — ${l.nome}`,
-      ...(l.morada
-        ? {
-            address: {
-              "@type": "PostalAddress",
-              streetAddress: l.morada,
-              addressLocality: l.nome,
-              addressCountry: "PT",
-            },
-          }
-        : {}),
-    })),
-    sport: "Brazilian Jiu-Jitsu",
-  };
-
-  return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{
-        __html: JSON.stringify(jsonLd).replace(/</g, "\\u003c"),
-      }}
-    />
-  );
-}
-
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -117,7 +68,6 @@ export default function RootLayout({
       className={`${barlowCondensed.variable} ${inter.variable} h-full antialiased`}
     >
       <body className="bg-dl-ink text-dl-bone flex min-h-full flex-col">
-        <DadosEstruturados />
         {children}
       </body>
     </html>
