@@ -299,8 +299,9 @@ export const locais: Local[] = [
       "https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3110.922692681144!2d-9.2296636!3d38.7654771!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0xd1ecdf99b6a7b1b%3A0xdd13ed47df4c4b1a!2sACADEMIA%20DL%20BJJ%20KIDS%20-%20CASAL%20DE%20S%C3%83O%20BR%C3%81S!5e0!3m2!1spt-PT!2spt!4v1784551527871!5m2!1spt-PT!2spt",
     foto: null,
     aulas: [
-      { turma: "Kids", dias: "Terça e Quinta", horario: "18:30", tipo: "kids" },
-      { turma: "Kids", dias: "Sábado", horario: "10:00", tipo: "kids" },
+      { turma: "Kids", dias: "Segunda, Quarta e Sexta", horario: "17:30", tipo: "kids" },
+      { turma: "Kids", dias: "Segunda, Quarta e Sexta", horario: "18:30", tipo: "kids" },
+      { turma: "Kids", dias: "Segunda, Quarta e Sexta", horario: "19:30", tipo: "kids" },
     ],
   },
 ];
