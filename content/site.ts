@@ -248,7 +248,7 @@ export const locais: Local[] = [
     aulas: [
       { turma: "Kids", dias: "Terça e Quinta", horario: "18:30", tipo: "kids" },
       { turma: "Kids", dias: "Sábado", horario: "10:00", tipo: "kids" },
-      { turma: "Jiu-Jitsu (Adultos)", dias: "Terça, Quarta e Sexta", horario: "20:00", tipo: "jiu-jitsu" },
+      { turma: "Jiu-Jitsu (Adultos)", dias: "Terça, Quarta e Sexta", horario: "08:00", tipo: "jiu-jitsu" },
     ],
   },
   {
