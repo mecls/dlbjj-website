@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import crypto from "node:crypto";
-import { WHATSAPP } from "@/lib/config";
+import { isProduction, WHATSAPP } from "@/lib/config";
 import type { InboundMessage } from "@/lib/messaging/provider";
 import { handleInbound } from "@/lib/bot/handle-inbound";
 
@@ -12,7 +12,10 @@ export function GET(req: NextRequest) {
   const mode = params.get("hub.mode");
   const token = params.get("hub.verify_token");
   const challenge = params.get("hub.challenge");
-  if (mode === "subscribe" && token === WHATSAPP.verifyToken()) {
+  const expected = WHATSAPP.verifyToken();
+  // Sem token configurado nunca se aceita: senão `hub.verify_token=` (vazio)
+  // bateria certo e qualquer pessoa validaria o webhook.
+  if (expected && mode === "subscribe" && token === expected) {
     return new NextResponse(challenge ?? "", { status: 200 });
   }
   return new NextResponse("Forbidden", { status: 403 });
@@ -20,7 +23,12 @@ export function GET(req: NextRequest) {
 
 function verifySignature(raw: string, header: string | null): boolean {
   const secret = WHATSAPP.appSecret();
-  if (!secret) return true; // sem segredo configurado (dev) → não valida
+  if (!secret) {
+    // Em dev, sem segredo, aceita-se para o simulador poder trabalhar. Em
+    // produção isso seria um webhook aberto a quem descobrisse o URL — e o
+    // sintoma seria o bot a conversar com desconhecidos, não um erro.
+    return !isProduction();
+  }
   if (!header) return false;
   const expected =
     "sha256=" + crypto.createHmac("sha256", secret).update(raw).digest("hex");
@@ -62,6 +70,7 @@ export async function POST(req: NextRequest) {
 interface WebhookPayload {
   entry?: {
     changes?: {
+      field?: string;
       value?: {
         contacts?: { profile?: { name?: string }; wa_id?: string }[];
         messages?: WaMessage[];
@@ -88,7 +97,17 @@ function normalize(payload: WebhookPayload): InboundMessage[] {
   for (const entry of payload.entry ?? []) {
     for (const change of entry.changes ?? []) {
       const value = change.value;
-      if (!value?.messages) continue;
+      if (!value?.messages) {
+        // A auto-pausa da Coexistence (o bot calar-se quando o Daniel responde
+        // pelo telemóvel) depende de saber o nome exato do campo de eco, e a
+        // documentação da Meta muda. Registar o que chega é a forma de o
+        // descobrir com evidência em vez de adivinhar — ver docs/PRE-VOO.md,
+        // Fase 6.
+        if (change.field && change.field !== "messages") {
+          console.log("[webhook] campo não tratado:", change.field);
+        }
+        continue;
+      }
       const nameByWaId = new Map<string, string>();
       for (const c of value.contacts ?? []) {
         if (c.wa_id && c.profile?.name) nameByWaId.set(c.wa_id, c.profile.name);

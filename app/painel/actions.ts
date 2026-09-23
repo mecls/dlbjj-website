@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { serviceClient } from "@/lib/supabase/service";
 import { sendOutbound } from "@/lib/bot/outbound";
-import { loginWith, logout } from "@/lib/auth";
+import { assertAuthed, loginWith, logout } from "@/lib/auth";
 import type { Lead, LeadStatus } from "@/lib/bot/types";
 
 const LEADS = "dlbjj_leads";
@@ -40,6 +40,7 @@ export async function logoutAction() {
 
 /** Resposta manual do Daniel — assume a conversa (pausa o bot) e envia. */
 export async function operatorReply(phone: string, body: string) {
+  await assertAuthed();
   const text = body.trim();
   if (!text) return;
   const lead = await leadByPhone(phone);
@@ -64,6 +65,7 @@ export async function operatorReply(phone: string, body: string) {
 }
 
 export async function pauseLead(phone: string) {
+  await assertAuthed();
   const db = serviceClient();
   await db
     .from(LEADS)
@@ -77,6 +79,7 @@ export async function pauseLead(phone: string) {
 }
 
 export async function resumeLead(phone: string) {
+  await assertAuthed();
   const db = serviceClient();
   await db
     .from(LEADS)
@@ -86,6 +89,7 @@ export async function resumeLead(phone: string) {
 }
 
 export async function setLeadStatus(phone: string, status: LeadStatus) {
+  await assertAuthed();
   const db = serviceClient();
   const patch: Partial<Lead> = { status };
   if (status === "concluido") patch.step = "concluido";

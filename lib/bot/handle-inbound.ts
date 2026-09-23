@@ -14,12 +14,14 @@ import { aulasPara } from "./schedule";
 import {
   confirmOptions,
   confirmedText,
+  greetingWithName,
   localOptions,
   modalidadeOptions,
   origemOptions,
   promptFor,
   publicoOptions,
 } from "./flow";
+import { parsePrefill } from "./prefill";
 
 /**
  * Ponto de entrada único para cada mensagem recebida (webhook real ou
@@ -55,9 +57,29 @@ export async function handleInbound(msg: InboundMessage): Promise<void> {
 
 async function advance(lead: Lead, msg: InboundMessage): Promise<void> {
   switch (lead.step) {
-    case "inicio":
-      await sendStep(lead, "nome");
-      return;
+    case "inicio": {
+      // A primeira mensagem era deitada fora. O site manda as pessoas pelo link
+      // wa.me com Nome/Modalidade/Local já escritos, e o bot perguntava o nome
+      // à mesma — a pessoa via-se a repetir o que tinha acabado de escrever.
+      const texto = (msg.text || "").trim();
+      const pre = parsePrefill(texto);
+      const collected: Record<string, unknown> = { ...(lead.collected ?? {}) };
+      if (texto) collected.primeira_mensagem = texto;
+      if (pre.modalidade) collected.prefill_modalidade = pre.modalidade;
+      if (pre.local) collected.prefill_local = pre.local;
+
+      const fresh = await updateLead(lead.id, {
+        collected,
+        ...(pre.nome ? { name: cleanName(pre.nome), status: "em_progresso" } : {}),
+      });
+
+      // Com o nome já dado, salta a pergunta do nome e abre no passo seguinte.
+      if (pre.nome) {
+        await setStep(fresh.id, "publico");
+        return say(fresh, greetingWithName(fresh.name), publicoOptions());
+      }
+      return sendStep(fresh, "nome");
+    }
 
     case "nome": {
       const text = (msg.text || "").trim();

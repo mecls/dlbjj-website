@@ -96,6 +96,12 @@ export default async function LeadPage({
               rotulo="Como conheceu"
               valor={lead.origem ? (ORIGEM_LABEL[lead.origem] ?? lead.origem) : "—"}
             />
+            {typeof lead.collected?.primeira_mensagem === "string" && (
+              <Linha
+                rotulo="Primeira mensagem"
+                valor={lead.collected.primeira_mensagem}
+              />
+            )}
             {lead.human_reason && (
               <Linha rotulo="Nota" valor={lead.human_reason} />
             )}

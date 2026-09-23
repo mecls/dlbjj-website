@@ -15,7 +15,15 @@ export async function botEnabled(): Promise<boolean> {
   return data?.value !== "off"; // default: ligado
 }
 
-/** Vai buscar a lead pelo número, criando-a (ficha nova) se ainda não existir. */
+/**
+ * Vai buscar a lead pelo número, criando-a (ficha nova) se ainda não existir.
+ *
+ * Duas mensagens que cheguem ao mesmo tempo do mesmo número correm isto duas
+ * vezes em paralelo: as duas não encontram nada, as duas tentam inserir, e o
+ * `unique` no `phone` faz a segunda falhar. Antes, essa falha devolvia `null` e
+ * rebentava mais à frente em `lead.id`; agora vai buscar a linha que a outra
+ * acabou de criar, que é o que se queria desde o início.
+ */
 export async function getOrCreateLead(
   phone: string,
   name?: string | null,
@@ -36,11 +44,25 @@ export async function getOrCreateLead(
     return lead;
   }
 
-  const { data } = await db
+  const { data, error } = await db
     .from(LEADS)
     .insert({ phone, name: name?.trim() || null, step: "inicio", status: "novo" })
     .select()
     .single();
+
+  if (error) {
+    // 23505 = unique_violation: outra mensagem criou a lead entretanto.
+    if (error.code === "23505") {
+      const { data: raced } = await db
+        .from(LEADS)
+        .select("*")
+        .eq("phone", phone)
+        .maybeSingle();
+      if (raced) return raced as Lead;
+    }
+    throw new Error(`getOrCreateLead(${phone}) falhou: ${error.message}`);
+  }
+  if (!data) throw new Error(`getOrCreateLead(${phone}) não devolveu linha`);
   return data as Lead;
 }
 
@@ -50,12 +72,16 @@ export async function updateLead(
   patch: Partial<Lead>,
 ): Promise<Lead> {
   const db = serviceClient();
-  const { data } = await db
+  const { data, error } = await db
     .from(LEADS)
     .update(patch)
     .eq("id", id)
     .select()
     .single();
+  // Sem isto, um update falhado devolvia `undefined` disfarçado de Lead e a
+  // conversa morria uns passos à frente, longe da causa.
+  if (error) throw new Error(`updateLead(${id}) falhou: ${error.message}`);
+  if (!data) throw new Error(`updateLead(${id}) não encontrou a lead`);
   return data as Lead;
 }
 

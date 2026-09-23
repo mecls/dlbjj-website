@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { InboundMessage } from "@/lib/messaging/provider";
 import { handleInbound } from "@/lib/bot/handle-inbound";
+import { simAllowed } from "@/lib/sim-guard";
 
 export const runtime = "nodejs";
 
@@ -11,8 +12,14 @@ export const runtime = "nodejs";
  *
  *   curl -X POST localhost:3000/api/sim/inject -H 'Content-Type: application/json' \
  *     -d '{"from":"351900000001","name":"Miguel","text":"Olá"}'
+ *
+ * Fechada em produção (ver lib/sim-guard.ts): responde 404, para não anunciar
+ * que existe.
  */
 export async function POST(req: NextRequest) {
+  if (!simAllowed(req)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
   const body = (await req.json()) as Partial<InboundMessage>;
   if (!body.from) {
     return NextResponse.json({ error: "from is required" }, { status: 400 });

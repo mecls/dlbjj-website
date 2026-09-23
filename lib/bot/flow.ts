@@ -99,6 +99,21 @@ export function publicoQuestion(name: string | null): string {
   return `${ola}A inscrição é para ti ou para um/a filho/a?`;
 }
 
+/**
+ * Abertura para quem já chegou com o nome escrito — veio pelo link `wa.me` do
+ * site com o formulário preenchido. Junta as boas-vindas à primeira pergunta
+ * numa só mensagem, para não perguntar o que a pessoa acabou de responder.
+ */
+export function greetingWithName(name: string | null): string {
+  const n = primeiroNome(name);
+  const ola = n ? `Olá ${n}! 👋` : "Olá! 👋";
+  return (
+    `${ola} Bem-vindo/a à Academia DL-BJJ. Sou o assistente de inscrições e em ` +
+    "1 minuto ajudo-te a marcar a tua *primeira aula grátis*.\n\n" +
+    "A inscrição é para ti ou para um/a filho/a?"
+  );
+}
+
 export function modalidadeQuestion(): string {
   return "Que modalidade te interessa mais?";
 }

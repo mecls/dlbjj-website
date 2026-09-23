@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import type { InboundMessage } from "@/lib/messaging/provider";
 import { handleInbound } from "@/lib/bot/handle-inbound";
+import { simAllowed } from "@/lib/sim-guard";
 
 export const runtime = "nodejs";
 
@@ -46,6 +47,9 @@ const CENARIOS: Record<string, Passo[]> = {
 };
 
 export async function POST(req: NextRequest) {
+  if (!simAllowed(req)) {
+    return new NextResponse("Not found", { status: 404 });
+  }
   const nome = req.nextUrl.searchParams.get("nome") ?? "adulto-jj";
   const passos = CENARIOS[nome];
   if (!passos) {

@@ -32,6 +32,9 @@ yarn-error.log*
 
 # env files (can opt-in for committing if needed)
 .env*
+# ...menos o modelo, que não tem segredos nenhuns e é o que diz a quem clona
+# quais são as variáveis precisas. Sem esta linha, o `.env*` acima apanha-o.
+!.env.example
 
 # vercel
 .vercel

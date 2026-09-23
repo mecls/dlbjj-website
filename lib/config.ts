@@ -25,6 +25,21 @@ export function requireEnv(name: string): string {
 }
 
 /**
+ * True quando estamos a servir a sério (produção no Vercel, ou um `next start`).
+ *
+ * Existe por um motivo só: as conveniências de desenvolvimento deste projeto
+ * (painel sem password, webhook sem assinatura, simulador aberto) são portas
+ * abertas se chegarem a produção por uma variável esquecida. Com isto, o que em
+ * dev é uma conveniência passa a ser uma recusa — falha fechado, não aberto.
+ */
+export function isProduction(): boolean {
+  return (
+    process.env.VERCEL_ENV === "production" ||
+    (!process.env.VERCEL_ENV && process.env.NODE_ENV === "production")
+  );
+}
+
+/**
  * True quando a WhatsApp Cloud API está configurada. Quando é false, o motor
  * envia tudo pelo simulador — o fluxo completo é testável (e demonstrável) sem
  * aprovação da Meta nem números reais.

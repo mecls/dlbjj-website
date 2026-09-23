@@ -1,47 +1,37 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect } from "react";
 import { useRouter } from "next/navigation";
-import { browserClient } from "@/lib/supabase/browser";
 
 /**
- * Subscreve mudanças no Postgres e recarrega a árvore de server components para
- * o painel ficar vivo à medida que o motor escreve nas tabelas dlbjj_.
+ * Mantém o painel vivo enquanto o motor escreve nas tabelas dlbjj_.
+ *
+ * Antes isto subscrevia o realtime do Supabase com a chave `anon`. Deixou de o
+ * fazer: essa chave é pública (viaja para o browser) e, para o realtime
+ * funcionar, o RLS tinha de deixar `anon` ler as leads todas — ou seja, os
+ * nomes, telefones e conversas de toda a gente ficavam legíveis a quem tivesse
+ * a chave. Ver supabase/migrations/002_dlbjj_rls.sql.
+ *
+ * Em troca, um `router.refresh()` de 10 em 10 segundos. O painel é uma página de
+ * administração com um utilizador; o custo é irrelevante e nada no browser fala
+ * com a base de dados. Pausa quando o separador está escondido, para não andar a
+ * recarregar um painel que ninguém está a ver.
  */
+const INTERVALO_MS = 10_000;
+
 export function RealtimeRefresher() {
   const router = useRouter();
-  const timer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-    ) {
-      return; // Supabase não configurado (dev) → sem realtime
-    }
-    const supabase = browserClient();
-    const debouncedRefresh = () => {
-      if (timer.current) clearTimeout(timer.current);
-      timer.current = setTimeout(() => router.refresh(), 250);
+    const tick = () => {
+      if (document.visibilityState === "visible") router.refresh();
     };
-
-    const channel = supabase
-      .channel("dlbjj-realtime")
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "dlbjj_leads" },
-        debouncedRefresh,
-      )
-      .on(
-        "postgres_changes",
-        { event: "*", schema: "public", table: "dlbjj_mensagens" },
-        debouncedRefresh,
-      )
-      .subscribe();
-
+    const id = setInterval(tick, INTERVALO_MS);
+    // Ao voltar ao separador, atualiza já em vez de esperar pelo próximo ciclo.
+    document.addEventListener("visibilitychange", tick);
     return () => {
-      if (timer.current) clearTimeout(timer.current);
-      supabase.removeChannel(channel);
+      clearInterval(id);
+      document.removeEventListener("visibilitychange", tick);
     };
   }, [router]);
 
