@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { paginaAviso as pagina } from "@/lib/html";
 
 export const runtime = "nodejs";
 
@@ -6,15 +7,6 @@ export const runtime = "nodejs";
  * Página de link inválido (reescrita pelo proxy.ts). 410 para expirado, usado
  * ou revogado; 404 para o que nunca existiu. Nunca mostra dados de ninguém.
  */
-function pagina(titulo: string, texto: string): string {
-  return `<!doctype html>
-<html lang="pt-PT"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<meta name="robots" content="noindex"><title>${titulo} — Academia DL-BJJ</title>
-<style>body{margin:0;font-family:system-ui,sans-serif;background:#231F20;color:#fff;display:flex;min-height:100vh;align-items:center;justify-content:center;padding:16px}
-main{max-width:28rem;text-align:center}h1{font-size:1.5rem;margin:0 0 .75rem}p{color:#ddd;line-height:1.5}b{color:#ED1C24}</style></head>
-<body><main><b>DL-BJJ</b><h1>${titulo}</h1><p>${texto}</p></main></body></html>`;
-}
-
 export function GET(req: NextRequest) {
   const kind = req.nextUrl.searchParams.get("kind");
   const motivo = req.nextUrl.searchParams.get("motivo");

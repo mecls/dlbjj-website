@@ -5,6 +5,9 @@ import { redirect } from "next/navigation";
 import { serviceClient } from "@/lib/supabase/service";
 import { sendOutbound } from "@/lib/bot/outbound";
 import { assertAuthed, loginWith, logout } from "@/lib/auth";
+import { APP } from "@/lib/config";
+import { primeiroNome } from "@/lib/alunos/consultas";
+import { emitirToken } from "@/lib/tokens-db";
 import type { Lead, LeadStatus } from "@/lib/bot/types";
 
 const LEADS = "dlbjj_leads";
@@ -94,5 +97,22 @@ export async function setLeadStatus(phone: string, status: LeadStatus) {
   const patch: Partial<Lead> = { status };
   if (status === "concluido") patch.step = "concluido";
   await db.from(LEADS).update(patch).eq("phone", phone);
+  refresh(phone);
+}
+
+/** Envia o link do formulário de inscrição (token de 14 dias, uso único; revoga os anteriores). */
+export async function enviarInscricao(phone: string) {
+  await assertAuthed();
+  const lead = await leadByPhone(phone);
+  if (!lead) throw new Error("Lead não encontrada.");
+  const token = await emitirToken("inscricao", { leadId: lead.id });
+  const n = primeiroNome(lead.name);
+  await sendOutbound({
+    leadId: lead.id,
+    to: phone,
+    role: "bot",
+    kind: "sistema",
+    body: `Olá${n ? ` ${n}` : ""}! Para concluir a tua inscrição na DL-BJJ, preenche este formulário (demora 2 minutos): ${APP.baseUrl()}/inscricao/${token}`,
+  });
   refresh(phone);
 }

@@ -3,6 +3,7 @@
 import { useTransition } from "react";
 import { Button } from "@/components/painel/ui";
 import {
+  enviarInscricao,
   pauseLead,
   resumeLead,
   setLeadStatus,
@@ -43,6 +44,13 @@ export function LeadActions({
         onClick={() => start(() => setLeadStatus(phone, "concluido"))}
       >
         Marcar concluído
+      </Button>
+      <Button
+        variant="outline"
+        disabled={pending}
+        onClick={() => start(() => enviarInscricao(phone))}
+      >
+        Enviar inscrição
       </Button>
       <Button
         variant="danger"
