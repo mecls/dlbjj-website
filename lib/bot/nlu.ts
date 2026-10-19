@@ -81,7 +81,7 @@ Responde SEMPRE e APENAS com um objeto JSON válido, sem texto à volta, nesta f
  * Repara os defeitos habituais de JSON de modelos open-source: blocos de
  * raciocínio, cercas markdown, vírgulas finais e JSON duplamente codificado.
  */
-function extractJson(text: string): Record<string, unknown> {
+export function extractJson(text: string): Record<string, unknown> {
   let cleaned = text
     .replace(/<think>[\s\S]*?<\/think>/gi, "")
     .replace(/```(?:json)?/gi, "");
