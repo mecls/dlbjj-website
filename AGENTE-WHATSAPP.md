@@ -1,217 +1,190 @@
 # Agente de WhatsApp — Guia de Arranque
 
-Tudo o que falta fazer para o agente de onboarding ficar a funcionar. O **código
-está pronto e testado** (build, typecheck, lint e o handshake do webhook passam).
-O que falta é **configuração** — contas, chaves e o setup na Meta. Segue por ordem.
+O que o agente faz, como está montado, e **o que ainda depende de ti** antes de
+entrar em produção. O código está feito e verificado (`npm run verify` corre
+tudo: typecheck, lint, 190+ testes unitários, de integração e ponta a ponta,
+incluindo um `next build` + `next start` sem segredos para provar que tudo
+falha fechado). A spec completa está em `dlbjj-build-spec.md`; o runbook da
+VPS em `docker/README.md`.
 
 ---
 
-## 1. Como funciona (resumo)
+## 0. O que ainda é manual (lista para o Miguel)
 
-Alguém escreve no WhatsApp da academia → o `webhook` recebe → o **motor** faz as
-perguntas de inscrição (nome → adulto/kids → modalidade → espaço → horário → como
-conheceu → confirmação), usando os **horários reais** de `content/site.ts`. Para
-texto livre e perguntas fora do guião, o **LLM (Ollama)** responde com base só no
-site. O Daniel vê e gere tudo no **painel** `/painel` e pode assumir a conversa a
-qualquer momento.
+1. **Criar o projeto Supabase dedicado da DL-BJJ** e correr, por ordem, no SQL
+   Editor: `supabase/migrations/001_dlbjj_onboarding.sql`, `002_dlbjj_rls.sql`,
+   `003_dlbjj_alunos.sql` (todas idempotentes). Depois `npm run seed:turmas`
+   com `.env.local` a apontar para lá (semeia as 14 turmas de `content/site.ts`).
+2. **Variáveis na Vercel** (Production + Preview): as de `.env.example` —
+   Supabase (3), `OLLAMA_API_KEY`, `APP_BASE_URL=https://www.dlbjj.org`,
+   `DLBJJ_WORKER_TOKEN`, `CRON_SECRET`, `DASHBOARD_PASSWORD`.
+3. **VPS**: clonar para `/opt/dlbjj`, preencher `docker/.env`, subir o gateway,
+   criar a sessão, **emparelhar o 925 797 266 por código no telemóvel do Daniel**,
+   subir o worker — passo a passo em `docker/README.md`.
+4. **Dizer ao Daniel, por escrito, o que sai para o Ollama Cloud** (§5 abaixo)
+   antes da primeira conversa real.
+5. **Ler o guião** em `lib/bot/flow.ts` e os textos de reativação em
+   `lib/reativacao/regras.ts`: é a voz da academia; o Daniel deve aprová-los.
 
-Sem as chaves do WhatsApp, o motor corre no **simulador** — dá para testar tudo
-antes de tocar na Meta.
-
----
-
-## 2. Estado atual
-
-**Já feito (no código):**
-- ✅ Webhook, motor de conversa, simulador, NLU (Ollama), dashboard `/painel`
-- ✅ Migração da base de dados (`supabase/migrations/001_dlbjj_onboarding.sql`)
-- ✅ Fluxo de onboarding ligado aos horários reais do site
-- ✅ Build / typecheck / lint / verificação do webhook a passar
-
-**Falta a ti (configuração):**
-- ⬜ Aplicar a migração no Supabase + meter as chaves
-- ⬜ Arranjar a chave da Ollama Cloud
-- ⬜ Testar o loop completo no simulador (local)
-- ⬜ Ativar a Coexistence na Meta (número 925 797 266) e obter as credenciais
-- ⬜ Meter as variáveis no Vercel e fazer deploy
-- ⬜ Registar o webhook na Meta e testar com um telemóvel real
+Sem a Meta: **não há Cloud API, não há Coexistence, não há templates.** O
+número liga-se ao gateway como dispositivo ligado; o Daniel fica com o telemóvel.
 
 ---
 
-## 3. O que precisas de arranjar
-
-| # | Serviço | O que obténs |
-|---|---------|--------------|
-| 1 | **Supabase** (projeto da waldi) | URL do projeto, `anon key`, `service_role key` |
-| 2 | **Ollama Cloud** (ollama.com) | `OLLAMA_API_KEY` |
-| 3 | **Meta Business + WhatsApp** | App Secret, `phone_number_id`, token permanente, verify token |
-| 4 | **Password do painel** | uma password à tua escolha (`DASHBOARD_PASSWORD`) |
-
----
-
-## 4. Passo a passo
-
-### A) Supabase (base de dados)
-
-Usamos o **mesmo projeto Supabase da waldi**. As tabelas novas têm prefixo
-`dlbjj_`, por isso não colidem com as da waldi.
-
-1. Abre o **Supabase → SQL Editor**.
-2. Cola o conteúdo de `supabase/migrations/001_dlbjj_onboarding.sql` e corre.
-   (É idempotente — podes correr outra vez sem problema.) Cria as tabelas
-   `dlbjj_leads`, `dlbjj_mensagens`, `dlbjj_settings` e liga o realtime.
-3. Em **Supabase → Project Settings → API**, copia:
-   - `Project URL` → `NEXT_PUBLIC_SUPABASE_URL`
-   - `anon public` → `NEXT_PUBLIC_SUPABASE_ANON_KEY`
-   - `service_role` → `SUPABASE_SERVICE_ROLE_KEY` (⚠️ secreta, nunca no browser)
-
-### B) Ollama Cloud (o "cérebro")
-
-1. Em **ollama.com**, cria uma API key → `OLLAMA_API_KEY`.
-2. O modelo por defeito é `gpt-oss:120b`. Se a tua conta não o tiver, muda
-   `OLLAMA_MODEL` para outro que tenhas (ex.: `gpt-oss:20b`).
-
-### C) Testar localmente no simulador (sem a Meta) ✅ recomendado antes de tudo
-
-1. `cp .env.example .env.local` e preenche **só** Supabase + Ollama +
-   `DASHBOARD_PASSWORD`. **Deixa os `WHATSAPP_*` vazios** → usa o simulador.
-2. Arranca:
-   ```bash
-   npm install
-   npm run dev          # se a porta 3000 estiver ocupada:  PORT=3005 npm run dev
-   ```
-3. Corre os cenários (dão-te o `phone` de volta):
-   ```bash
-   curl -X POST 'localhost:3000/api/sim/scenario?nome=adulto-jj'
-   curl -X POST 'localhost:3000/api/sim/scenario?nome=kids'
-   curl -X POST 'localhost:3000/api/sim/scenario?nome=pergunta-preco'
-   ```
-4. Abre **`localhost:3000/painel`** (password = `DASHBOARD_PASSWORD`) e vê as
-   conversas em tempo real. O cenário `pergunta-preco` confirma que o bot **não
-   inventa preços**.
-5. Para simular mensagens à mão:
-   ```bash
-   curl -X POST localhost:3000/api/sim/inject -H 'Content-Type: application/json' \
-     -d '{"from":"351911111111","name":"Teste","text":"Olá"}'
-   ```
-
-### D) Meta / WhatsApp Cloud API com **Coexistence**
-
-> Coexistence = o Daniel mantém a app **WhatsApp Business** no telemóvel E o bot
-> partilha o mesmo número. Tem de ser a app **Business** (verde), não o WhatsApp
-> normal. ⚠️ A interface da Meta muda com frequência — os nomes podem variar.
-
-1. **Meta Business Manager** → garante que o *Business Portfolio* está verificado.
-2. **developers.facebook.com** → cria uma **App** (tipo *Business*) e adiciona o
-   produto **WhatsApp**.
-3. **App → Settings → Basic** → copia o **App Secret** → `WHATSAPP_APP_SECRET`.
-4. Em **WhatsApp Manager**, adiciona o número **925 797 266** pela via de
-   **Coexistence** ("connect an existing WhatsApp Business app number") — o Daniel
-   confirma lendo um **QR code** na app WhatsApp Business dele.
-5. Em **WhatsApp Manager → API Setup**, copia o **`phone_number_id`** →
-   `WHATSAPP_PHONE_NUMBER_ID`.
-6. Cria um **System User** (Business Settings → Users → System Users) com as
-   permissões `whatsapp_business_messaging` + `whatsapp_business_management` e gera
-   um **token permanente** → `WHATSAPP_TOKEN`.
-7. Escolhe uma frase qualquer para `WHATSAPP_VERIFY_TOKEN` (ex.: `dlbjj-verify-2026`)
-   — vais usá-la nos dois lados (env + config do webhook).
-
-### E) Deploy no Vercel + registar o webhook
-
-1. No **Vercel → Project (DLBJJ-lp) → Settings → Environment Variables**, mete
-   **todas** as variáveis da secção 6 (Production + Preview).
-2. Faz **deploy** (`git push` ou `vercel --prod`).
-3. Na **Meta → App → WhatsApp → Configuration → Webhook**:
-   - **Callback URL:** `https://www.dlbjj.org/api/whatsapp/webhook`
-   - **Verify token:** o mesmo `WHATSAPP_VERIFY_TOKEN`
-   - Clica *Verify and Save* (a Meta chama o `GET`; a nossa rota devolve o
-     `challenge` se o token bater).
-   - **Subscreve o campo `messages`.** ⚠️ Para a Coexistence, subscreve também o
-     campo de **eco de mensagens da app** (o nome exato depende da versão da Meta —
-     ver secção 7).
-
-### F) Testar em produção
-
-1. De um telemóvel (não o do Daniel), manda "Olá" para o **925 797 266**.
-2. O bot deve responder e guiar a inscrição.
-3. Confirma no **`https://www.dlbjj.org/painel`** que a lead aparece e a conversa
-   é gravada.
-
----
-
-## 5. Operar o dia-a-dia — painel `/painel`
-
-- **Lista de leads:** nome, estado, passo, e há quanto tempo escreveram.
-- **Detalhe da lead:** ficha completa (modalidade, espaço, horário, como conheceu)
-  + a conversa toda.
-- **Pausar bot (assumir):** o Daniel passa a responder ele; o bot cala-se nessa
-  conversa. **Retomar bot** devolve-a ao agente.
-- Responder pela caixa do painel **assume automaticamente** a conversa (pausa o bot).
-- **Ligar/desligar o bot globalmente:** na tabela `dlbjj_settings`, muda
-  `bot_enabled` para `off`/`on`.
-
----
-
-## 6. Referência das variáveis de ambiente
-
-| Variável | Onde obter | Obrigatória? |
-|----------|------------|--------------|
-| `NEXT_PUBLIC_SUPABASE_URL` | Supabase → API | ✅ |
-| `NEXT_PUBLIC_SUPABASE_ANON_KEY` | Supabase → API | ✅ |
-| `SUPABASE_SERVICE_ROLE_KEY` | Supabase → API (secreta) | ✅ |
-| `OLLAMA_API_KEY` | ollama.com | ✅ |
-| `OLLAMA_BASE_URL` | (default `https://ollama.com/v1`) | opcional |
-| `OLLAMA_MODEL` | (default `gpt-oss:120b`) | opcional |
-| `DASHBOARD_PASSWORD` | à tua escolha | ✅ (senão o painel fica aberto) |
-| `WHATSAPP_TOKEN` | Meta System User (token permanente) | ✅ produção |
-| `WHATSAPP_PHONE_NUMBER_ID` | WhatsApp Manager → API Setup | ✅ produção |
-| `WHATSAPP_VERIFY_TOKEN` | à tua escolha (igual no webhook) | ✅ produção |
-| `WHATSAPP_APP_SECRET` | Meta App → Settings → Basic | ✅ produção |
-| `CRON_SECRET` | à tua escolha | opcional (ainda não usado) |
-
-> Sem `WHATSAPP_TOKEN` + `WHATSAPP_PHONE_NUMBER_ID`, corre o **simulador**.
-> Supabase + Ollama são sempre precisos para o loop funcionar.
-
----
-
-## 7. A confirmar / pontos em aberto
-
-- **Eco da Coexistence (auto-pausa):** para o bot detetar sozinho quando o Daniel
-  responde pela app e se calar, é preciso confirmar o **nome exato do campo de eco**
-  do webhook na documentação atual de Coexistence da Meta. Até lá, funciona a
-  **pausa manual** no painel (que é sempre fiável).
-- **NoGi:** hoje só existe como "Treino Livre (Gi e NoGi)", Sexta 20:00 em São Brás.
-  Confirmar com o Daniel se oferecer NoGi = esse slot, ou encaminhar para humano.
-- **Texto do bot:** o guião pt-PT está escrito em `lib/bot/flow.ts` — vale a pena o
-  Daniel dar uma vista de olhos e aprovar as mensagens.
-- ⚠️ **Segredos da waldi:** o `waldi-mvp/.env.example` tem chaves reais commitadas.
-  Se reutilizares alguma, roda-a por segurança.
-
----
-
-## 8. Resolução de problemas
-
-| Sintoma | Causa provável / solução |
-|---------|--------------------------|
-| Painel dá erro "Falta configurar o Supabase" | Faltam `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_SERVICE_ROLE_KEY` |
-| `sim/inject` devolve 500 | Supabase não configurado ou migração não aplicada |
-| Webhook não valida na Meta | `WHATSAPP_VERIFY_TOKEN` diferente do que meteste no config do webhook |
-| Bot não responde a mensagens reais | Falta subscrever o campo `messages`; ou `WHATSAPP_TOKEN`/`phone_number_id` errados; ou o número não está em Coexistence |
-| Bot responde por cima do Daniel | Usa **Pausar bot** no painel (o auto-pausa por eco ainda não está ligado) |
-| O bot "não sabe" e escala tudo | Confirma `OLLAMA_API_KEY` e que o `OLLAMA_MODEL` existe na tua conta |
-| Conversa duplicada | (não deve acontecer) a dedupe por `wa_message_id` protege contra reentregas da Meta |
-
----
-
-### Ficheiros-chave (para referência)
+## 1. Como funciona
 
 ```
-content/site.ts                         ← modalidades e horários reais (fonte de verdade)
-lib/bot/flow.ts                         ← guião/texto do bot (perguntas e opções)
-lib/bot/handle-inbound.ts               ← máquina de estados do onboarding
-lib/bot/nlu.ts                          ← chamada ao Ollama + regras "não inventar"
-app/api/whatsapp/webhook/route.ts       ← webhook da Meta
-app/painel/*                            ← dashboard do Daniel
-supabase/migrations/001_dlbjj_onboarding.sql  ← tabelas dlbjj_
-.env.example                            ← modelo das variáveis
+pessoa ──WhatsApp──▶ gateway OpenWA ──webhook──▶ worker (VPS) ──POST /api/agent/inbound──▶ app (Vercel)
+                     (Baileys)       ◀── REST ──          ◀──── dlbjj_fila_saida ────────   + Supabase
+```
+
+- **A app** (Next.js 16, Vercel) tem o cérebro: o guião de onboarding, as
+  palavras-chave (check-in, ficha, opt-out), as regras de reativação, o painel
+  e as páginas públicas. **Nunca fala com o WhatsApp**: tudo o que diz vai para
+  a fila `dlbjj_fila_saida`.
+- **O worker** (`worker/`, Node 22 na VPS) é dono do socket e do relógio:
+  recebe os webhooks assinados, encaminha o que chega, drena a fila com
+  indicador de escrita e pausas, aplica as portas no momento de sair
+  (interruptor, opt-out, janela 09:00–21:00, teto diário, restrição do
+  WhatsApp) e deteta o Daniel a responder pelo telemóvel (pausa a conversa 24 h).
+- **O gateway** (`rmyndharis/OpenWA` 0.14.4, motor Baileys, Docker) é a sessão
+  do WhatsApp. Loopback só; nunca virado para a internet.
+
+### O que a pessoa pode fazer no WhatsApp
+
+| Escreve | Acontece |
+|---|---|
+| "Olá" (ou o link do site) | Onboarding: nome → para quem → modalidade → espaço → horário → origem → confirmação. Opções como texto numerado; responde com o número. |
+| uma pergunta | O modelo responde SÓ com os factos de `content/site.ts`; preços nunca. Questões sensíveis passam ao Daniel. |
+| `presente` / `cheguei` / `treinei` | Check-in na aula de hoje (pergunta qual, se houver várias; e para quem, se forem irmãos). Aluno inativo volta a ativo. |
+| `perfil` / `a minha ficha` | Link da ficha (7 dias, 3 por dia): faixa, início, presenças, próximas aulas. |
+| `parar` / "não quero mais mensagens" | Opt-out para sempre das proativas. Confirmado uma vez. |
+
+### O que o Daniel faz no painel (`/painel`)
+
+Inscrições (leads e conversa, assumir/retomar, **Enviar inscrição**) · Alunos
+(ficha, graduações, presenças, anonimizar, novo aluno) · Aulas (ranking e lista
+de presenças por dia) · Reativação (em atraso, Saltar, Enviar agora, toques,
+opt-outs) · Perguntar (só com os dados; nunca inventa) · Agente (interruptor,
+sessão, envios desconhecidos, entradas por processar).
+
+### O que corre sozinho
+
+- **Reativação** (`vercel.json`, de hora a hora 08–20 UTC): R1 lead a meio 24 h,
+  R2 72 h (depois perdida aos 7 dias), R3 lead concluída sem inscrição 10 dias,
+  R4 aluno sem presença 14 dias, R5 30 dias (fica inativo). Teto de 10 proativas
+  por dia, só 09:00–21:00 de Lisboa, espalhadas por 3 horas.
+- **Anonimização** (mensal): 24 meses sem contacto → nome, telemóvel e dados
+  pessoais substituídos; faixas, presenças e opt-outs ficam.
+
+---
+
+## 2. Desenvolver e testar sem rede
+
+```bash
+colima start            # ou o Docker que usares
+supabase start          # portas 5434x (config.toml)
+npm install
+cp .env.test .env.local # ou preenche o .env.example
+npm run seed:turmas
+npm run dev             # http://localhost:3000/painel (password = DASHBOARD_PASSWORD)
+```
+
+Injetar mensagens no motor (a fila de saída é a "entrega"; vê-se no painel):
+
+```bash
+curl -X POST 'localhost:3000/api/sim/scenario?nome=adulto-jj'
+curl -X POST 'localhost:3000/api/sim/scenario?nome=kids'
+curl -X POST 'localhost:3000/api/sim/scenario?nome=pergunta-preco'
+curl -X POST localhost:3000/api/sim/inject -H 'Content-Type: application/json' \
+  -d '{"from":"351911111111","name":"Teste","text":"presente"}'
+```
+
+`OLLAMA_FAKE=1` troca o modelo por uma tabela (`lib/llm/fake.ts`). O worker
+corre contra um gateway de mentira nos testes (`worker/test/fake-gateway.ts`).
+
+```bash
+npm run verify          # tudo; ~6 min (inclui next build)
+npm run test:unit       # só o rápido
+```
+
+---
+
+## 3. Variáveis de ambiente
+
+| Onde | Variável | Nota |
+|---|---|---|
+| Vercel + worker | `NEXT_PUBLIC_SUPABASE_URL` / `SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY` | projeto **dedicado** |
+| Vercel | `NEXT_PUBLIC_SUPABASE_ANON_KEY` | nunca usada no browser |
+| Vercel | `OLLAMA_API_KEY`, `OLLAMA_MODEL`, `OLLAMA_BASE_URL` | `OLLAMA_FAKE=1` só em dev/testes |
+| Vercel | `APP_BASE_URL` | base dos links públicos |
+| Vercel + worker | `DLBJJ_WORKER_TOKEN` | o mesmo valor nos dois lados |
+| Vercel | `CRON_SECRET` | bearer dos crons; `x-sim-secret` do simulador |
+| Vercel | `DASHBOARD_PASSWORD` | sem ela, o painel **fecha** em produção |
+| worker | `OPENWA_*`, `WORKER_*` | ver `worker/.env.example` e `docker/.env.example` |
+
+Em produção, uma variável em falta **fecha** a porta: inbound 503, crons 503,
+simulador 404, painel 307 (há um teste que o prova: `tests/e2e/producao.test.ts`).
+
+---
+
+## 4. Afinar sem deploy (`dlbjj_settings`)
+
+`bot_enabled` (painel /agente), `proativas_por_dia` (10), `janela_inicio`/`janela_fim`
+(09:00/21:00), `resposta_atraso_media_s`/`_desvio_s` (8/3), `proativa_intervalo_medio_s`/`_desvio_s`
+(240/90), `digitar_wpm` (40), `humano_pausa_horas` (24). O worker relê a cada ciclo.
+
+Se o WhatsApp mandar um `session.restriction`, o worker trava as proativas 60 min
+sozinho e o painel diz-o. Se repetir: baixar `proativas_por_dia`.
+
+---
+
+## 5. RGPD — isto tem de ser dito ao Daniel
+
+**O Ollama Cloud corre fora da União Europeia e não garante retenção zero fora
+do plano Team.** Em cada chamada ao modelo saem: o texto da mensagem da pessoa,
+o primeiro nome e o passo da conversa (onboarding); a pergunta do Daniel e as
+linhas que a ferramenta devolveu (painel Perguntar — nunca encarregado, saúde,
+contactos, NIF, morada, email, telemóvel ou nascimento).
+
+O responsável pelo tratamento é a academia. Antes da primeira conversa real, o
+Daniel tem de ser informado disto por escrito. Alternativas: um modelo
+auto-hospedado, ou um fornecedor com compromisso escrito de retenção zero.
+
+Além disso: dados de saúde e de menores só aparecem na ficha do aluno no
+painel e no formulário; retenção de 24 meses após o último contacto; os
+opt-outs são hashes e ficam para sempre.
+
+---
+
+## 6. Risco que nenhum código resolve
+
+Isto é um cliente **não oficial** de WhatsApp. O número **pode ser banido** sem
+aviso. O que reduz o risco está feito (responder a quem escreve não conta para
+o teto; proativas limitadas, só de dia, espaçadas; nunca permanentemente
+online; parar quando o WhatsApp avisa). O que fazer no dia em que acontecer
+está em `docker/README.md`.
+
+---
+
+## 7. Mapa do código
+
+```
+content/site.ts                      ← horários e locais (fonte única; seed:turmas)
+lib/bot/handle-inbound.ts            ← a ordem: opt-out → interruptor → check-in/ficha → regresso → guião
+lib/bot/flow.ts · nlu.ts · render.ts · resolve.ts   ← guião, modelo, opções numeradas
+lib/bot/checkin*.ts · perfil.ts · optout.ts         ← utilidades do aluno
+lib/bot/outbound.ts                  ← a ÚNICA porta de saída (fila)
+lib/inscricao/*                      ← formulário, validação, criação do aluno
+lib/reativacao/*                     ← regras R1–R5, execução, resposta
+lib/perguntar/*                      ← catálogo, ferramentas, modelo, resposta
+lib/anonimizar.ts · limites.ts · tokens*.ts · tempo.ts
+proxy.ts                             ← tokens e limite nas páginas públicas
+app/painel/*  app/api/painel/*       ← painel e as suas ações (POST + 303)
+app/inscricao/[token]  app/aluno/[token]           ← páginas públicas
+app/api/agent/inbound  app/api/cron/*              ← worker → app; crons da Vercel
+worker/src/*                         ← gateway, webhook, drenagem, passagem de mão
+docker/*                             ← compose e runbook da VPS
+supabase/migrations/*  supabase/seed.sql           ← esquema e fixtures
+tests/* · worker/test/*              ← unit, integration, e2e; gateway e app de mentira
 ```

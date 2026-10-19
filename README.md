@@ -108,6 +108,20 @@ Para repor uma delas: voltar a importá-la e a renderizá-la em `app/page.tsx`, 
 
 ---
 
+## Agente de WhatsApp, inscrições e alunos
+
+O site tem agora um agente de WhatsApp (onboarding, check-in, ficha do aluno,
+reativação), um formulário de inscrição por link e um painel (`/painel`) com
+alunos, aulas, reativação e um chat que responde só com os dados. A app nunca
+fala com o WhatsApp: escreve numa fila e um worker numa VPS envia pelo gateway
+OpenWA. Tudo explicado em **`AGENTE-WHATSAPP.md`**; a spec em
+`dlbjj-build-spec.md`; a VPS em `docker/README.md`; o estado em `docs/PRE-VOO.md`.
+
+```bash
+supabase start && npm run seed:turmas && npm run dev   # local
+npm run verify                                         # tudo o que o CI corre
+```
+
 ## Publicar (Vercel — recomendado)
 
 O site é estático e faz deploy num clique:

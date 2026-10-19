@@ -524,7 +524,7 @@ Runner: **Vitest** (add it; alias `server-only` to an empty module in `vitest.co
 Append one line per decision you made that this spec did not settle, in the form:
 `<what you decided> — <why, in one clause>`. Also record anything you deliberately did not build because §2 excluded it.
 
-Pre-seeded (made during the interview; recorded here so the log is complete):
+Pre-seeded (made during the interview):
 - OpenWA/Baileys over Meta Cloud API — proactive messages days later without templates, and Daniel keeps his phone; ban risk accepted and documented.
 - Same VPS as ARwatches, separate Compose project — cost; isolation by network/volume/ports/keys.
 - Dedicated Supabase project — minors' health data must not share a service key with another client.
@@ -533,6 +533,38 @@ Pre-seeded (made during the interview; recorded here so the log is complete):
 - Numbered text options instead of interactive buttons — Baileys does not deliver them reliably.
 - Reactivation rules evaluated in the app by Vercel cron, sent by the worker — business rules stay in one runtime; the worker keeps only the clock and the socket.
 - Check-ins accepted all day (00:00–23:59 Lisbon) rather than in a window around the class — fewer forks; a late "treinei hoje" still counts.
+
+Made during the build (2026-10-19/20):
+- `dlbjj_toques` allows UPDATE (estado, respondeu_em) and forbids only DELETE — §7 needs state transitions on touches; §8's "fully append-only" could not hold for that table.
+- `dlbjj_reclamar_fila` also reclaims `a_enviar` rows whose lease is stale and whose send never started — otherwise a crashed worker wedged rows forever.
+- A′ "no compatible class" is unreachable with the current `content/site.ts`; the A′ e2e covers the sensitive-question handoff instead.
+- Opt-out matcher: "não quero" / "para de" count only with a messaging-context phrase; bare "parar"/"stop"/"remover" only as the whole message — the literal list made "não quero MMA" an opt-out mid-guião.
+- `InboundMessage.agora` (ISO) is accepted only from `/api/sim/*` so e2e can fix the Lisbon clock; the worker never sets it.
+- Siblings on one phone are listed by `inicio_em` then name.
+- Bot off: opt-outs are still recorded (no reply); a check-in with exactly one possible class is recorded silently; multi-choice check-ins are dropped.
+- A phone that already has students and writes a non-keyword message skips onboarding (lead → inscrito/concluido) and gets the grounded Q&A path.
+- 410/404 for token pages live in `proxy.ts` + `/api/link-invalido` (App Router pages cannot set 410).
+- An `@lid` sender with no gateway-resolved phone is logged and dropped; the app identifies people by phone only.
+- Dead-letter key is the WhatsApp message id (redeliveries carry the same id).
+- Backpressure (`restricao_ate`) holds proativas only; replies, system and human messages still go.
+- Humanisation can be disabled with `WORKER_HUMANIZE=0` (tests only); production default on.
+- Compose: `SERVE_DASHBOARD=false`, `BODY_SIZE_LIMIT=16mb` (text only).
+- The enrolment form is an HTML string rendered by both the page and the 422 route — Next forbids `react-dom/server` in app code.
+- The form posts to `POST /api/inscricao/<token>` (plain HTML form); the proxy gates the page, the route re-verifies the token.
+- `inicio_em` = submission day (Lisbon); the first graduação is dated the same day with nota "inscrição".
+- Panel mutations added in this build are POST route handlers under `/api/painel/*` behind `assertAuthed()` with plain forms and 303 back; the pre-existing server actions stay.
+- Manual student creation sends no WhatsApp message.
+- A mis-ticked presence cannot be removed (append-only); the checklist disables already-present rows.
+- When R5 applies, R4 is not also sent in the same run.
+- A reply within 7 days of a touch marks it answered and cancels any still-pending proativa for that phone.
+- "Saltar" inserts a toque with estado `saltada`, which the rules treat as done.
+- Cron routes: 401 without a matching bearer; 503 in production without `CRON_SECRET`.
+- The ask-the-data chat is a form POST + redirect with the history read from `dlbjj_perguntas`; the 20 s cap is server-side.
+- `ficha_aluno` privacy is enforced by explicit select lists in every tool; an integration test checks the returned keys.
+- Login moved to `POST /api/painel/login` (same cookie) so the IP rate limit is testable end to end.
+- The anonymisation cron also deletes closed queue rows > 90 days, questions > 12 months and expired limit counters.
+
+Not built because §2 excluded it: payments, Instagram, native app, capacity/booking, audio transcription, instructor roles, Cloud API fallback, write access from the chat.
 
 ## 17. Definition of Done
 
