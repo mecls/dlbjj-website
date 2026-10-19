@@ -1,4 +1,3 @@
-import { loginAction } from "@/app/painel/actions";
 import { Button, Card } from "@/components/painel/ui";
 
 export default async function LoginPage({
@@ -17,7 +16,7 @@ export default async function LoginPage({
         <p className="mt-1 text-sm text-neutral-500">
           Introduz a password para entrar.
         </p>
-        <form action={loginAction} className="mt-4 space-y-3">
+        <form method="post" action="/api/painel/login" className="mt-4 space-y-3">
           <input
             type="password"
             name="password"
@@ -25,9 +24,11 @@ export default async function LoginPage({
             placeholder="Password"
             className="w-full rounded-lg border border-neutral-300 px-3 py-2 text-sm"
           />
-          {erro && (
+          {erro === "limite" ? (
+            <p className="text-sm text-red-600">Demasiadas tentativas. Tenta daqui a 15 minutos.</p>
+          ) : erro ? (
             <p className="text-sm text-red-600">Password incorreta.</p>
-          )}
+          ) : null}
           <Button type="submit" className="w-full">
             Entrar
           </Button>

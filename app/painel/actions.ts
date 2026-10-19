@@ -4,7 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { serviceClient } from "@/lib/supabase/service";
 import { sendOutbound } from "@/lib/bot/outbound";
-import { assertAuthed, loginWith, logout } from "@/lib/auth";
+import { assertAuthed, logout } from "@/lib/auth";
 import { APP } from "@/lib/config";
 import { primeiroNome } from "@/lib/alunos/consultas";
 import { emitirToken } from "@/lib/tokens-db";
@@ -28,11 +28,6 @@ function refresh(phone: string) {
 }
 
 // ─── Auth ───
-
-export async function loginAction(formData: FormData) {
-  const ok = await loginWith(String(formData.get("password") ?? ""));
-  redirect(ok ? "/painel" : "/painel/login?erro=1");
-}
 
 export async function logoutAction() {
   await logout();
