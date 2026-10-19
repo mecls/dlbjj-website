@@ -1,0 +1,27 @@
+{
+  "name": "dlbjj-worker",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Worker do agente DL-BJJ: recebe os webhooks do gateway OpenWA, encaminha as mensagens para a app (Vercel) e drena a fila de saída (dlbjj_fila_saida) com indicadores de escrita e atrasos. Zero lógica de negócio: o que dizer decide-se na app.",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "node --import tsx src/index.ts",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run"
+  },
+  "engines": {
+    "node": ">=22.11"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "^2.110.2",
+    "zod": "^4.6.7"
+  },
+  "devDependencies": {
+    "@types/node": "^22.20.5",
+    "dotenv": "^18.0.8",
+    "tsx": "^4.23.15",
+    "typescript": "^5",
+    "vitest": "^5.0.5"
+  }
+}
