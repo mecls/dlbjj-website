@@ -16,6 +16,7 @@ import { registarOptOut } from "./optout";
 import { checkinSilencioso, continuarCheckin, iniciarCheckin } from "./checkin-fluxo";
 import { continuarPerfil, pedirPerfil } from "./perfil";
 import { dizer } from "./dizer";
+import { registarResposta } from "@/lib/reativacao/resposta";
 import { logInbound } from "./outbound";
 import { interpret } from "./nlu";
 import { aulasPara } from "./schedule";
@@ -53,6 +54,9 @@ export async function handleInbound(msg: InboundMessage): Promise<void> {
 
   const text = (msg.text || "").trim();
   const ligado = await botEnabled();
+
+  // 0. Respondeu a um toque de reativação? Fica registado; as proativas pendentes caem.
+  await registarResposta(lead.id, lead.phone);
 
   // 1. Opt-out: determinista, antes de tudo, e fica gravado mesmo com o bot desligado.
   if (isOptOut(text, lead.step)) {

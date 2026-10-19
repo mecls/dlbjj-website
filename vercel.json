@@ -1,0 +1,6 @@
+{
+  "crons": [
+    { "path": "/api/cron/reativacao", "schedule": "0 8-20 * * *" },
+    { "path": "/api/cron/anonimizar", "schedule": "0 3 1 * *" }
+  ]
+}
