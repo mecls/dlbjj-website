@@ -30,6 +30,7 @@ export async function POST(req: NextRequest) {
     buttonId: body.buttonId,
     mediaUrl: body.mediaUrl,
     name: body.name,
+    agora: body.agora,
   };
   await handleInbound(msg);
   return NextResponse.json({ ok: true });

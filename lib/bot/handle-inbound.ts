@@ -6,10 +6,17 @@ import {
   botEnabled,
   getOrCreateLead,
   pauseForHuman,
+  resumeLead,
   setStep,
   updateLead,
 } from "./state";
-import { logInbound, sendOutbound } from "./outbound";
+import { alunosDoTelefone } from "@/lib/alunos/consultas";
+import { isCheckin, isOptOut, isPerfil } from "./keywords";
+import { registarOptOut } from "./optout";
+import { checkinSilencioso, continuarCheckin, iniciarCheckin } from "./checkin-fluxo";
+import { continuarPerfil, pedirPerfil } from "./perfil";
+import { dizer } from "./dizer";
+import { logInbound } from "./outbound";
 import { interpret } from "./nlu";
 import { aulasPara } from "./schedule";
 import {
@@ -30,7 +37,8 @@ import { parsePrefill } from "./prefill";
  * e depois faz avançar a máquina de estados do onboarding.
  */
 export async function handleInbound(msg: InboundMessage): Promise<void> {
-  const lead = await getOrCreateLead(msg.from, msg.name);
+  const agora = msg.agora ? new Date(msg.agora) : new Date();
+  let lead = await getOrCreateLead(msg.from, msg.name);
 
   // Idempotência: regista o inbound; se for reentrega (mesmo wa_message_id), sai.
   const created = await logInbound({
@@ -43,9 +51,41 @@ export async function handleInbound(msg: InboundMessage): Promise<void> {
   });
   if (!created) return;
 
-  // Lead assumida por um humano, ou bot desligado → fica calado.
+  const text = (msg.text || "").trim();
+  const ligado = await botEnabled();
+
+  // 1. Opt-out: determinista, antes de tudo, e fica gravado mesmo com o bot desligado.
+  if (isOptOut(text, lead.step)) {
+    await registarOptOut(lead, text, ligado);
+    return;
+  }
+
+  // 2. Interruptor desligado: nada sai. Um check-in inequívoco ainda fica registado.
+  if (!ligado) {
+    if (isCheckin(text)) await checkinSilencioso(lead, agora);
+    return;
+  }
+
+  // 3. Utilidades (check-in, ficha) — correm mesmo com a conversa pausada para humano.
+  if (await continuarCheckin(lead, text, agora)) return;
+  if (await continuarPerfil(lead, text)) return;
+  if (isCheckin(text)) return iniciarCheckin(lead, agora);
+  if (isPerfil(text)) return pedirPerfil(lead);
+
+  // 4. Regresso automático: o Daniel respondeu pelo telemóvel há mais de N horas.
+  if (lead.paused && lead.humano_ate && new Date(lead.humano_ate).getTime() <= agora.getTime()) {
+    lead = await resumeLead(lead.id);
+    if (lead.step !== "inicio" && lead.step !== "concluido") await reAsk(lead);
+    return;
+  }
+
+  // 5. Lead assumida por um humano → fica calado.
   if (lead.paused || lead.status === "humano") return;
-  if (!(await botEnabled())) return;
+
+  // 6. Um telemóvel que já tem aluno(s) não faz onboarding: responde a dúvidas.
+  if (lead.step === "inicio" && (await alunosDoTelefone(lead.phone)).length > 0) {
+    lead = await updateLead(lead.id, { step: "concluido", status: "inscrito" });
+  }
 
   try {
     await advance(lead, msg);
@@ -213,13 +253,7 @@ async function say(
   text: string,
   options: OutboundOption[] = [],
 ): Promise<void> {
-  await sendOutbound({
-    leadId: lead.id,
-    to: lead.phone,
-    role: "bot",
-    body: text,
-    options: options.length ? options : undefined,
-  });
+  await dizer(lead, text, options);
 }
 
 /**

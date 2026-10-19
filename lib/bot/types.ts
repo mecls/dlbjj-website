@@ -30,7 +30,9 @@ export type LeadStatus =
   | "novo"
   | "em_progresso"
   | "concluido"
+  | "inscrito"
   | "humano"
+  | "perdido"
   | "descartado";
 
 export type Lead = {
@@ -49,6 +51,11 @@ export type Lead = {
   status: LeadStatus;
   paused: boolean;
   human_reason: string | null;
+  /** Até quando o bot fica calado depois de o Daniel responder pelo telemóvel. */
+  humano_ate: string | null;
+  aluno_id: string | null;
+  ultima_regra: string | null;
+  respondeu_regra_em: string | null;
   first_contact_at: string;
   last_message_at: string;
   created_at: string;
@@ -68,6 +75,8 @@ export interface InboundMessage {
   waMessageId?: string;
   /** nome de perfil do WhatsApp, se disponível */
   name?: string;
+  /** "Agora" (ISO) — SÓ o simulador o define, para os testes fixarem o relógio. */
+  agora?: string;
 }
 
 export type MessageDirection = "in" | "out";
@@ -89,7 +98,9 @@ export const STATUS_LABEL: Record<LeadStatus, string> = {
   novo: "Novo",
   em_progresso: "Em progresso",
   concluido: "Concluído",
+  inscrito: "Inscrito",
   humano: "Com humano",
+  perdido: "Perdido",
   descartado: "Descartado",
 };
 

@@ -83,7 +83,7 @@ export async function resumeLead(phone: string) {
   const db = serviceClient();
   await db
     .from(LEADS)
-    .update({ paused: false, status: "em_progresso", human_reason: null })
+    .update({ paused: false, status: "em_progresso", human_reason: null, humano_ate: null })
     .eq("phone", phone);
   refresh(phone);
 }

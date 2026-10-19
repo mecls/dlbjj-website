@@ -65,12 +65,22 @@ export async function startApp(): Promise<{ baseUrl: string; stop: () => Promise
 }
 
 /** Injeta uma mensagem no motor (rota do simulador). */
-export async function inject(msg: { from: string; text?: string; name?: string; buttonId?: string }): Promise<Response> {
+export async function inject(msg: { from: string; text?: string; name?: string; buttonId?: string; agora?: string }): Promise<Response> {
   return fetch(`${E2E_URL}/api/sim/inject`, {
     method: "POST",
     headers: { "content-type": "application/json" },
     body: JSON.stringify(msg),
   });
+}
+
+/** Últimas linhas da fila de saída para um número (corpo e tipo), por ordem. */
+export async function filaDe(sb: import("@supabase/supabase-js").SupabaseClient, phone: string) {
+  const { data } = await sb
+    .from("dlbjj_fila_saida")
+    .select("kind,corpo,estado,erro,regra")
+    .eq("phone", phone)
+    .order("created_at", { ascending: true });
+  return data ?? [];
 }
 
 export async function scenario(nome: string, phone?: string): Promise<{ phone: string }> {

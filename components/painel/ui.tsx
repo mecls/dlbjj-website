@@ -24,7 +24,9 @@ const STATUS_STYLE: Record<LeadStatus, string> = {
   novo: "bg-sky-100 text-sky-800",
   em_progresso: "bg-amber-100 text-amber-800",
   concluido: "bg-emerald-100 text-emerald-800",
+  inscrito: "bg-emerald-200 text-emerald-900",
   humano: "bg-red-100 text-red-800",
+  perdido: "bg-neutral-200 text-neutral-600",
   descartado: "bg-neutral-100 text-neutral-500",
 };
 

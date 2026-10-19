@@ -107,10 +107,11 @@ export async function pauseForHuman(id: string, reason: string): Promise<void> {
   });
 }
 
-export async function resumeLead(id: string): Promise<void> {
-  await updateLead(id, {
+export async function resumeLead(id: string): Promise<Lead> {
+  return updateLead(id, {
     paused: false,
     status: "em_progresso",
     human_reason: null,
+    humano_ate: null,
   });
 }
