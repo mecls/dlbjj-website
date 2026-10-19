@@ -67,6 +67,19 @@ describe("validarInscricao", () => {
     expect(validarInscricao({ ...adulto, data_nascimento: "2030-01-01" }, HOJE).ok).toBe(false);
   });
 
+  it("um número português de 9 dígitos ganha o indicativo 351; outros formatos curtos são recusados", () => {
+    const r = validarInscricao({ ...adulto, phone: "912 345 678", enc_telefone: "961111111" }, HOJE);
+    expect(r.ok).toBe(true);
+    if (r.ok) {
+      expect(r.dados.phone).toBe("351912345678");
+      expect(r.dados.enc_telefone).toBe("351961111111");
+    }
+    expect(validarInscricao({ ...adulto, phone: "+351 912 345 678" }, HOJE)).toMatchObject({ ok: true, dados: { phone: "351912345678" } });
+    expect(validarInscricao({ ...adulto, phone: "00351912345678" }, HOJE)).toMatchObject({ ok: true, dados: { phone: "351912345678" } });
+    expect(validarInscricao({ ...adulto, phone: "212345678" }, HOJE)).toMatchObject({ ok: false, erros: { phone: "Telemóvel inválido — inclui o indicativo (ex.: 351912345678)" } });
+    expect(validarInscricao({ ...adulto, phone: "12345" }, HOJE).ok).toBe(false);
+  });
+
   it("espaço, modalidade e faixa desconhecidos são recusados", () => {
     expect(validarInscricao({ ...adulto, local_slug: "lisboa" }, HOJE).ok).toBe(false);
     expect(validarInscricao({ ...adulto, modalidade: "boxe" }, HOJE).ok).toBe(false);

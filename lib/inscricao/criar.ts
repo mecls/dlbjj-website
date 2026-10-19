@@ -3,7 +3,6 @@ import { serviceClient } from "@/lib/supabase/service";
 import { primeiroNome } from "@/lib/alunos/consultas";
 import { sendOutbound } from "@/lib/bot/outbound";
 import { hojeLisboa } from "@/lib/tempo";
-import { marcarTokenUsado } from "@/lib/tokens-db";
 import type { DadosInscricao } from "./validar";
 
 export const TEXTO_CONFIRMACAO = (nome: string) =>
@@ -55,12 +54,12 @@ export async function criarAlunoManual(dados: DadosInscricao, inicioEm?: string 
   return inserirAluno(dados, null, inicioEm || hojeLisboa());
 }
 
-export async function criarAluno(token: string, leadId: string | null, dados: DadosInscricao): Promise<string> {
+/** O token já foi reclamado atomicamente por quem chama (reclamarTokenInscricao). */
+export async function criarAluno(leadId: string | null, dados: DadosInscricao): Promise<string> {
   const db = serviceClient();
   const hoje = hojeLisboa();
   const alunoId = await inserirAluno(dados, leadId, hoje);
   const aluno = { id: alunoId };
-  await marcarTokenUsado(token);
 
   if (leadId) {
     const { data: lead } = await db.from("dlbjj_leads").select("name").eq("id", leadId).single();

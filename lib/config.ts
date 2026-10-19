@@ -45,8 +45,10 @@ export function requireEnv(name: string): string {
  * dev é uma conveniência passa a ser uma recusa — falha fechado, não aberto.
  */
 export function isProduction(): boolean {
-  return (
-    process.env.VERCEL_ENV === "production" ||
-    (!process.env.VERCEL_ENV && process.env.NODE_ENV === "production")
-  );
+  const vercel = process.env.VERCEL_ENV;
+  // Um deploy de PREVIEW na Vercel tem as mesmas chaves que produção; para as
+  // portas (painel, simulador, segredos) conta como produção. Só `vercel dev`
+  // ("development") e um `next dev` local ficam de fora.
+  if (vercel === "production" || vercel === "preview") return true;
+  return !vercel && process.env.NODE_ENV === "production";
 }

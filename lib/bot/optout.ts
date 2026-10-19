@@ -3,6 +3,7 @@ import { createHash } from "node:crypto";
 import { serviceClient } from "@/lib/supabase/service";
 import { primeiroNome } from "@/lib/alunos/consultas";
 import { dizer } from "./dizer";
+import { cancelarProativasPendentes } from "@/lib/reativacao/resposta";
 import type { Lead } from "./types";
 
 export function hashTelefone(phone: string): string {
@@ -21,12 +22,7 @@ export async function registarOptOut(lead: Lead, texto: string, ligado: boolean)
     .from("dlbjj_opt_outs")
     .insert({ phone_hash: hashTelefone(lead.phone), motivo: texto.slice(0, 200) });
 
-  await db
-    .from("dlbjj_fila_saida")
-    .update({ estado: "cancelada", erro: "opt-out" })
-    .eq("phone", lead.phone)
-    .eq("kind", "proativa")
-    .eq("estado", "pendente");
+  await cancelarProativasPendentes(lead.phone, "opt-out");
 
   if (error) {
     if (error.code === "23505") return; // já tinha opt-out: silêncio

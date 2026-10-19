@@ -52,6 +52,11 @@ export function LeadActions({
       >
         Enviar inscrição
       </Button>
+      <form method="post" action={`/api/painel/leads/${phone}/perdido`}>
+        <Button type="submit" variant="outline" disabled={pending}>
+          Marcar como perdido
+        </Button>
+      </form>
       <Button
         variant="danger"
         disabled={pending}

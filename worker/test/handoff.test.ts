@@ -41,6 +41,18 @@ describe("passagem de mão (Daniel escreve pelo telemóvel)", () => {
     expect(r).toBe("ignorado");
   });
 
+  it("um eco que chega ANTES de o envio responder (linha a_enviar com envio iniciado e o mesmo texto) é nosso (I2)", async () => {
+    const { phone, id } = FIXTURES.leads.novo;
+    await sb.from("dlbjj_fila_saida").insert({ phone, kind: "resposta", corpo: "Olá! 👋 Bem-vindo/a", estado: "a_enviar", locked_by: "w", locked_at: new Date().toISOString(), envio_iniciado_em: new Date().toISOString() });
+    const r = await applyHandoff(sb, { id: "wamid.ainda-sem-id", phone, chatId: `${phone}@c.us`, text: "Olá! 👋 Bem-vindo/a" }, 24);
+    expect(r).toBe("ignorado");
+    const { data } = await sb.from("dlbjj_leads").select("paused").eq("id", id).single();
+    expect(data!.paused).toBe(false);
+    // Texto diferente no mesmo instante: é mesmo o Daniel.
+    const r2 = await applyHandoff(sb, { id: "wamid.daniel-2", phone, chatId: `${phone}@c.us`, text: "Sou eu, o Daniel" }, 24);
+    expect(r2).toBe("pausado");
+  });
+
   it("o Daniel escreve a um número novo: a lead nasce já com humano", async () => {
     const phone = "351900000777";
     const r = await applyHandoff(sb, { id: "wamid.novo-1", phone, chatId: `${phone}@c.us`, text: "Boa tarde!" }, 24);

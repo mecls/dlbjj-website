@@ -19,6 +19,7 @@ tudo no ramo `agente-openwa`, **por publicar**. Nada em produção mudou ainda.
 | Facto | Como se verificou |
 |---|---|
 | Código, migrações, worker, Docker, painel, testes | `npm run verify` → exit 0 (typecheck, lint, unit, integration, e2e, worker, compose) |
+| Revisão independente do ramo inteiro feita; 2 críticos + 14 importantes corrigidos com testes | `dlbjj-build-spec.md` §16 lista o que foi corrigido e o que ficou adiado |
 | Produção falha fechado sem segredos | `tests/e2e/producao.test.ts`: `next build` + `next start` → inbound 503, crons 503, sim 404, painel 307 |
 | A fila é a única porta de saída | `grep -rn "send-text" app lib` → 0; só em `worker/` |
 | Nenhum teste precisa de rede | `OLLAMA_FAKE=1`, gateway e app de mentira; Supabase local |
@@ -35,11 +36,12 @@ tudo no ramo `agente-openwa`, **por publicar**. Nada em produção mudou ainda.
 
 ## Fase 2 — Base de dados dedicada · **Miguel**
 
-- [ ] Criar o projeto Supabase da DL-BJJ. Correr `001`, `002`, `003` no SQL Editor.
+- [ ] Criar o projeto Supabase da DL-BJJ. Correr `001`, `002`, `003`, `004` no SQL Editor.
 - [ ] `.env.local` com as 3 chaves → `npm run seed:turmas` → `npm run seed:turmas:check`.
-- [ ] Vercel: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`,
-      `SUPABASE_SERVICE_ROLE_KEY`, `OLLAMA_API_KEY`, `APP_BASE_URL`,
-      `DLBJJ_WORKER_TOKEN` (`openssl rand -hex 32`), `CRON_SECRET`, `DASHBOARD_PASSWORD`.
+- [ ] Vercel (**só Production**, nunca Preview): `NEXT_PUBLIC_SUPABASE_URL`,
+      `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `OLLAMA_API_KEY`,
+      `APP_BASE_URL`, `DLBJJ_WORKER_TOKEN` (`openssl rand -hex 32`), `CRON_SECRET`,
+      `DASHBOARD_PASSWORD`.
 - [ ] Confirmar `https://www.dlbjj.org/painel` → pede password; `/painel/agente`
       diz "o worker ainda não reportou".
 

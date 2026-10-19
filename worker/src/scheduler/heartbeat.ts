@@ -7,7 +7,7 @@ import type { WhatsAppTransport } from "../transport/types";
  * De minuto a minuto: o estado da sessão vai para dlbjj_sessao (uma linha), que
  * o painel /agente lê. Nunca apaga `restricao_ate`: só o backpressure a escreve.
  */
-export async function heartbeat(ctx: { db: Db; transport: WhatsAppTransport }): Promise<void> {
+export async function heartbeat(ctx: { db: Db; transport: WhatsAppTransport; descartadas?: () => Record<string, number> }): Promise<void> {
   let estado: "ligado" | "instavel" | "caido" = "caido";
   let detalhe: string | null = null;
   let telefone: string | null = null;
@@ -20,6 +20,13 @@ export async function heartbeat(ctx: { db: Db; transport: WhatsAppTransport }): 
     restricao = s.restricao;
   } catch (e) {
     detalhe = `gateway inacessível: ${e instanceof Error ? e.message : String(e)}`;
+  }
+  const desc = ctx.descartadas?.() ?? {};
+  const totalDesc = Object.values(desc).reduce((a, b) => a + b, 0);
+  if (totalDesc > 0) {
+    const resumo = `${totalDesc} entradas descartadas desde o arranque (${Object.entries(desc).map(([k, v]) => `${k}: ${v}`).join(", ")})`;
+    detalhe = detalhe ? `${detalhe} · ${resumo}` : resumo;
+    if (estado === "ligado") estado = "instavel";
   }
   const dia = hojeLisboa();
   const { data: orc } = await ctx.db.from("dlbjj_orcamento_envio").select("proativas,respostas,recebidas").eq("dia", dia).maybeSingle();

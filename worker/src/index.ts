@@ -55,7 +55,7 @@ async function main(): Promise<void> {
     path: config.webhookPath,
     secret: config.openwaWebhookSecret,
     onEvent: dispatch,
-    health: () => ({ workerId: config.workerId, ecosConhecidos: registrySize(), aEnviar: drainInFlight() }),
+    health: () => ({ workerId: config.workerId, ecosConhecidos: registrySize(), aEnviar: drainInFlight(), descartadas: dispatch.descartadas() }),
   });
   log.info("a receber webhooks", { port: config.port, path: config.webhookPath });
 
@@ -65,14 +65,14 @@ async function main(): Promise<void> {
 
   const timers = iniciar([
     { nome: "drenar", intervaloMs: config.drainIntervalMs, correr: async () => void (await drainOnce(deps)) },
-    { nome: "heartbeat", intervaloMs: config.heartbeatIntervalMs, correr: () => heartbeat({ db, transport }) },
+    { nome: "heartbeat", intervaloMs: config.heartbeatIntervalMs, correr: () => heartbeat({ db, transport, descartadas: dispatch.descartadas }) },
     {
       nome: "retomar-entradas",
       intervaloMs: config.retryIntervalMs,
       correr: async () => void (await retomarFalhadas({ db, appBaseUrl: config.appBaseUrl, token: config.workerToken, timeoutMs: config.appTimeoutMs })),
     },
   ]);
-  void heartbeat({ db, transport });
+  void heartbeat({ db, transport, descartadas: dispatch.descartadas });
 
   let aFechar = false;
   const parar = async (sinal: string) => {

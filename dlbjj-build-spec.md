@@ -564,6 +564,27 @@ Made during the build (2026-10-19/20):
 - Login moved to `POST /api/painel/login` (same cookie) so the IP rate limit is testable end to end.
 - The anonymisation cron also deletes closed queue rows > 90 days, questions > 12 months and expired limit counters.
 
+Fixed after the whole-branch review (2026-10-20), each with a test that failed first:
+- Enrolment token claimed atomically (conditional UPDATE) before the student is created; a double submit yields one student and 410 for the loser.
+- Resuming a handed-off lead keeps `concluido`/`inscrito` instead of forcing `em_progresso` (a booked lead was becoming an R1 target and then `perdido`).
+- Migration 004: `dlbjj_toques.fila_id` is `on delete set null` (90-day cleanup no longer blocked); touches can be `cancelada`; `dlbjj_terminar_fila(pendente)` clears `envio_iniciado_em`; the RPC also moves the touch to enviada/falhou/cancelada.
+- Reply detection only marks SENT touches answered; pending proativas (and their touches) are cancelled instead; rules ignore cancelled/failed touches.
+- A `message.sent` echo arriving before our `sendText` resolves is recognised as ours through the in-flight queue row (`a_enviar` + `envio_iniciado_em` + same text).
+- An inbound whose processing fails after the idempotency row is written has that row deleted and the error re-thrown, so the worker's retry is not treated as a duplicate.
+- Voice notes arrive as `[áudio]` and get "Não consigo ouvir áudios. Podes escrever por texto, por favor? 🙏" plus the current question, with no LLM call; photos/unsupported get "Só consigo ler texto. 🙂 Podes escrever?".
+- Messages over 900 characters are split on blank lines into consecutive queue rows 3 s apart.
+- `/painel`: status filter, name/phone search, "telemóvel" chip; `/painel/[phone]`: bubble state tags, "Marcar como perdido", inline send error.
+- `POST /api/inscricao/<token>` is rate-limited (10/min/IP → 429).
+- Phones are normalised to E.164 digits (a 9-digit Portuguese mobile gains 351; `00` prefix stripped); shorter numbers are refused with a message that asks for the indicative.
+- A `perdido` lead that writes again reopens as `em_progresso` at its step.
+- "Os dois / Todos" at check-in is offered only when the siblings share academy and public; otherwise one at a time.
+- Any Vercel deployment (production or preview) counts as production for the fail-closed guards; the docs say Preview never gets the service key.
+- Bare "cancelar", "basta", "chega" are no longer opt-outs (at the confirmation step "cancelar" is a booking cancellation).
+- Worker counts and warns on discarded inbound payloads, shows the counter in `/health` and in the heartbeat detail (session goes `instavel`), and ignores a `message.received` carrying the id of one of our own sends.
+- The anonymisation cron checks every delete for errors and answers 500 when one fails.
+
+Deferred from the review as minor (recorded in the ledger, not fixed): `last_message_at` bumped by outbound sends (affects R2 timing and panel ordering); profile-link daily limit is per student rather than per phone; check-in/profile dialogue expiry uses wall clock rather than `agora`; `ilike` search strips `%_` but not `*`; `listar_alunos` applies `limite` before the `faixa` filter; the 20 s ask-the-data timer is not cancelled after a timeout; `editar`/`estado` panel routes ignore the update's error; `turma_preferida` not validated against `dlbjj_turmas` (FK error → generic 500); successful logins count toward the login limit; `message.failed` does not mark the message row; `cronAutorizado` lives in a route module; `decodeURIComponent` on a malformed token path throws 500; `resolve.ts` does not accept "1." / "1)" / two-digit replies; a second sibling enrolled through the same lead overwrites `dlbjj_leads.aluno_id`; touches keyed by phone give two silent siblings one R4; `worker/Dockerfile` uses `npm install` rather than `npm ci`; `tsconfig.json` carries a Next-generated `.next/dev/dev/types` include.
+
 Not built because §2 excluded it: payments, Instagram, native app, capacity/booking, audio transcription, instructor roles, Cloud API fallback, write access from the chat.
 
 ## 17. Definition of Done

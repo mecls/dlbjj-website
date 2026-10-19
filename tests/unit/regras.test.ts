@@ -111,6 +111,11 @@ describe("regras de reativação (spec §5.1)", () => {
     expect(avaliarRegras(ctx({ leads: [lead({ phone: "anon:abc" })] }))).toEqual([]);
   });
 
+  it("um toque cancelado ou falhado não conta: a regra volta a disparar", () => {
+    expect(avaliarRegras(ctx({ leads: [lead({})], toques: [toque({ estado: "cancelada", enviada_em: null })] }))[0]).toMatchObject({ regra: "R1" });
+    expect(avaliarRegras(ctx({ leads: [lead({})], toques: [toque({ estado: "falhou", enviada_em: null })] }))[0]).toMatchObject({ regra: "R1" });
+  });
+
   it("um toque saltado também conta como já tocado", () => {
     expect(avaliarRegras(ctx({ leads: [lead({})], toques: [toque({ estado: "saltada", enviada_em: null })] }))).toEqual([]);
   });

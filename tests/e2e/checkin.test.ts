@@ -80,6 +80,26 @@ describe("Jornada C — check-in (AC-6)", () => {
     expect(fila.at(-1)!.corpo).toBe("Presença registada para João e Inês: Kids · segunda 18:30 · BJJ Kids. Bom treino! 🥋");
   });
 
+  it("irmãos em espaços diferentes: não há opção 'os dois'; cada um regista a sua aula (I10)", async () => {
+    const { phone } = FIXTURES.alunos.joao;
+    const { data: adulto } = await sb
+      .from("dlbjj_alunos")
+      .insert({ nome: "Marta Pereira", data_nascimento: "1985-01-01", phone, publico: "adulto", modalidade: "jiu-jitsu", local_slug: "sao-bras", inicio_em: "2026-10-01", estado: "ativo", consentimento_rgpd_em: new Date().toISOString() })
+      .select("id")
+      .single();
+    await inject({ from: phone, text: "presente", agora: "2026-11-09T19:45:00Z" }); // segunda
+    let fila = await filaDe(sb, phone);
+    expect(fila.at(-1)!.corpo).toContain("1. João Pereira");
+    expect(fila.at(-1)!.corpo).toContain("2. Inês Pereira");
+    expect(fila.at(-1)!.corpo).toContain("3. Marta Pereira");
+    expect(fila.at(-1)!.corpo).not.toContain("Os dois");
+    expect(fila.at(-1)!.corpo).not.toContain("Todos");
+    await inject({ from: phone, text: "3", agora: "2026-11-09T19:45:00Z" });
+    fila = await filaDe(sb, phone);
+    expect(fila.at(-1)!.corpo).toContain("3. 19:30"); // as aulas de São Brás, não as dos miúdos
+    await sb.from("dlbjj_alunos").update({ estado: "ex_aluno" }).eq("id", adulto!.id);
+  });
+
   it("um check-in volta a pôr um aluno inativo como ativo", async () => {
     const { phone, id } = FIXTURES.alunos.rui;
     await sb.from("dlbjj_alunos").update({ estado: "inativo" }).eq("id", id);

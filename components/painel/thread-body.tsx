@@ -56,12 +56,27 @@ function ChatBubble({ m }: { m: LeadMessage }) {
         <p className="whitespace-pre-wrap">{m.body}</p>
         <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-neutral-400">
           <span className="capitalize">{roleLabel(m.role)}</span>
+          {out && m.estado && (
+            <span className={cn("rounded px-1", m.estado === "falhou" || m.estado === "desconhecido" ? "bg-red-100 text-red-700" : m.estado === "na_fila" ? "bg-neutral-200 text-neutral-600" : "text-neutral-400")}>
+              {ESTADO_LABEL[m.estado] ?? m.estado}
+            </span>
+          )}
           <span>{timeAgo(m.created_at)}</span>
         </div>
       </div>
     </div>
   );
 }
+
+const ESTADO_LABEL: Record<string, string> = {
+  na_fila: "na fila",
+  enviada: "enviada",
+  entregue: "entregue",
+  lida: "lida",
+  falhou: "falhou",
+  desconhecido: "desconhecido",
+  cancelada: "cancelada",
+};
 
 function roleLabel(role: MessageRole): string {
   return { lead: "cliente", bot: "assistente", humano: "Daniel" }[role];

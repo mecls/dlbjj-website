@@ -61,10 +61,22 @@ const limpo = (v: unknown): string => (typeof v === "string" ? v.trim() : "");
 const ouNull = (v: string): string | null => (v ? v : null);
 const digitos = (v: string): string => v.replace(/\D/g, "");
 
+/**
+ * Telefones ficam em E.164 sem "+", só dígitos. Um número português escrito
+ * à portuguesa (9 dígitos a começar por 9) ganha o 351; "00351…" perde o 00.
+ * Devolve "" quando não dá para normalizar com confiança.
+ */
+export function normalizarTelefone(v: string): string {
+  let d = digitos(v);
+  if (d.startsWith("00")) d = d.slice(2);
+  if (/^9\d{8}$/.test(d)) d = `351${d}`;
+  return /^\d{11,15}$/.test(d) ? d : "";
+}
+
 const Esquema = z.object({
   nome: z.string().min(2, "Nome obrigatório").max(120),
   data_nascimento: z.string().regex(/^\d{4}-\d{2}-\d{2}$/, "Data de nascimento obrigatória"),
-  phone: z.string().regex(/^\d{9,15}$/, "Telemóvel inválido"),
+  phone: z.string().regex(/^\d{11,15}$/, "Telemóvel inválido — inclui o indicativo (ex.: 351912345678)"),
   email: z.union([z.literal(""), z.string().email("Email inválido")]),
   local_slug: z.string().refine((s) => SLUGS.includes(s), "Espaço desconhecido"),
   modalidade: z.enum(MODALIDADES, { message: "Modalidade desconhecida" }),
@@ -75,7 +87,7 @@ const Esquema = z.object({
 export function validarInscricao(campos: Record<string, unknown>, hoje: Date = new Date()): ResultadoValidacao {
   const erros: Record<string, string> = {};
   const c = Object.fromEntries(Object.entries(campos).map(([k, v]) => [k, limpo(v)]));
-  c.phone = digitos(c.phone ?? "");
+  c.phone = normalizarTelefone(c.phone ?? "");
   c.nif = digitos(c.nif ?? "");
 
   const base = Esquema.safeParse({
@@ -132,10 +144,10 @@ export function validarInscricao(campos: Record<string, unknown>, hoje: Date = n
       turma_preferida: ouNull(c.turma_preferida ?? ""),
       experiencia_previa: ouNull(c.experiencia_previa ?? ""),
       enc_nome: ouNull(c.enc_nome ?? ""),
-      enc_telefone: ouNull(digitos(c.enc_telefone ?? "")),
+      enc_telefone: ouNull(normalizarTelefone(c.enc_telefone ?? "") || digitos(c.enc_telefone ?? "")),
       enc_relacao: ouNull(c.enc_relacao ?? ""),
       contacto_emergencia_nome: ouNull(c.contacto_emergencia_nome ?? ""),
-      contacto_emergencia_telefone: ouNull(digitos(c.contacto_emergencia_telefone ?? "")),
+      contacto_emergencia_telefone: ouNull(normalizarTelefone(c.contacto_emergencia_telefone ?? "") || digitos(c.contacto_emergencia_telefone ?? "")),
       condicoes_saude: ouNull(c.condicoes_saude ?? ""),
       consentimento_imagem: c.consentimento_imagem === "on" || c.consentimento_imagem === "true",
       faixa: base.data.faixa,

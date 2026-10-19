@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 import { serviceClient } from "@/lib/supabase/service";
 import { sendOutbound } from "@/lib/bot/outbound";
+import { statusAoRetomar } from "@/lib/bot/state";
 import { assertAuthed, logout } from "@/lib/auth";
 import { APP } from "@/lib/config";
 import { primeiroNome } from "@/lib/alunos/consultas";
@@ -78,11 +79,13 @@ export async function pauseLead(phone: string) {
 
 export async function resumeLead(phone: string) {
   await assertAuthed();
+  const lead = await leadByPhone(phone);
+  if (!lead) return;
   const db = serviceClient();
   await db
     .from(LEADS)
-    .update({ paused: false, status: "em_progresso", human_reason: null, humano_ate: null })
-    .eq("phone", phone);
+    .update({ paused: false, status: statusAoRetomar(lead), human_reason: null, humano_ate: null })
+    .eq("id", lead.id);
   refresh(phone);
 }
 

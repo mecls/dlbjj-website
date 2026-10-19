@@ -4,7 +4,8 @@ import { paginaAviso, paginaHtml } from "@/lib/html";
 import { criarAluno } from "@/lib/inscricao/criar";
 import { ESTILO_FORMULARIO, formularioHtml } from "@/lib/inscricao/formulario";
 import { validarInscricao } from "@/lib/inscricao/validar";
-import { verificarToken } from "@/lib/tokens-db";
+import { ipDe, permitido } from "@/lib/limites";
+import { devolverToken, reclamarTokenInscricao, verificarToken } from "@/lib/tokens-db";
 
 export const runtime = "nodejs";
 
@@ -17,8 +18,11 @@ const LINK_INVALIDO = paginaAviso("Este link já não é válido", "Escreve-nos 
  * com a confirmação quando o aluno fica criado (spec §3 B, §6.9, §6.10).
  */
 export async function POST(req: NextRequest, { params }: { params: Promise<{ token: string }> }) {
+  if (!(await permitido("inscricao-post", ipDe(req.headers), 10, 60))) {
+    return new NextResponse("Demasiados pedidos. Tenta daqui a um minuto.", { status: 429, headers: { "content-type": "text/plain; charset=utf-8" } });
+  }
   const { token } = await params;
-  const { avaliacao, row } = await verificarToken(token, "inscricao");
+  const { avaliacao } = await verificarToken(token, "inscricao");
   if (!avaliacao.ok) {
     return new NextResponse(LINK_INVALIDO, { status: avaliacao.motivo === "desconhecido" ? 404 : 410, headers: HTML });
   }
@@ -39,10 +43,15 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ tok
     return new NextResponse(paginaHtml("Inscrição", corpo, { estilo: ESTILO_FORMULARIO }), { status: 422, headers: HTML });
   }
 
+  // Só depois de os dados estarem válidos é que o token é reclamado — atomicamente.
+  const row = await reclamarTokenInscricao(token);
+  if (!row) return new NextResponse(LINK_INVALIDO, { status: 410, headers: HTML });
+
   try {
-    await criarAluno(token, row?.lead_id ?? null, r.dados);
+    await criarAluno(row.lead_id ?? null, r.dados);
   } catch (e) {
     console.error("[inscricao] criarAluno falhou", e);
+    await devolverToken(token);
     return new NextResponse(paginaAviso("Não foi possível concluir", "Tenta outra vez daqui a uns minutos ou escreve-nos no WhatsApp (925 797 266)."), { status: 500, headers: HTML });
   }
   return new NextResponse(paginaAviso("Inscrição recebida", "Inscrição recebida. Vais receber uma confirmação no WhatsApp."), { status: 200, headers: HTML });

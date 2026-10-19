@@ -91,6 +91,8 @@ export type LeadMessage = {
   body: string;
   media_url: string | null;
   wa_message_id: string | null;
+  /** Só nas mensagens de saída: na_fila → enviada → entregue → lida, ou falhou / desconhecido / cancelada. */
+  estado?: string | null;
   created_at: string;
 };
 

@@ -73,8 +73,18 @@ describe("GET /api/cron/reativacao (AC-7, metade da app)", () => {
     }
   });
 
-  it("uma resposta da pessoa fica registada no toque e na lead", async () => {
+  it("uma resposta antes de o toque sair não o marca como respondido; cancela-o e a regra volta a contar", async () => {
     const { handleInbound } = await import("@/lib/bot/handle-inbound");
+    await handleInbound({ from: "351910000002", text: "olá, ainda aí?" }); // Bruno, R1 ainda na fila
+    const { data: t } = await sb.from("dlbjj_toques").select("estado,respondeu_em").eq("phone", "351910000002").eq("regra", "R1").single();
+    expect(t).toEqual({ estado: "cancelada", respondeu_em: null });
+    const { data: f } = await sb.from("dlbjj_fila_saida").select("estado").eq("phone", "351910000002").eq("kind", "proativa").single();
+    expect(f!.estado).toBe("cancelada");
+  });
+
+  it("uma resposta a um toque já enviado fica registada no toque e na lead", async () => {
+    const { handleInbound } = await import("@/lib/bot/handle-inbound");
+    await sb.from("dlbjj_toques").update({ estado: "enviada", enviada_em: new Date().toISOString() }).eq("phone", "351910000003").eq("regra", "R3");
     await handleInbound({ from: "351910000003", text: "sim, quero marcar outra vez" }); // Carla, R3
     const { data: t } = await sb.from("dlbjj_toques").select("respondeu_em").eq("phone", "351910000003").eq("regra", "R3").single();
     expect(t!.respondeu_em).not.toBeNull();

@@ -2,6 +2,7 @@ import "server-only";
 import { serviceClient } from "@/lib/supabase/service";
 import type { OutboundOption } from "./options";
 import { renderOptions } from "./render";
+import { dividirCorpo } from "./dividir";
 import type { MessageRole } from "./types";
 
 const MSGS = "dlbjj_mensagens";
@@ -9,9 +10,10 @@ const LEADS = "dlbjj_leads";
 const FILA = "dlbjj_fila_saida";
 
 /**
- * Regista uma mensagem recebida. Devolve `true` se foi mesmo inserida, `false`
- * se já existia (mesmo wa_message_id) — é a GUARDA de idempotência: o gateway
- * reentrega webhooks, e assim o motor só processa cada mensagem uma vez.
+ * Regista uma mensagem recebida. `created = false` quando já existia (mesmo
+ * wa_message_id) — é a GUARDA de idempotência: o gateway reentrega webhooks,
+ * e assim o motor só processa cada mensagem uma vez. Devolve o id da linha
+ * para a poder apagar se o tratamento falhar (ver retrocesso.ts).
  */
 export async function logInbound(params: {
   leadId: string | null;
@@ -20,23 +22,27 @@ export async function logInbound(params: {
   body: string;
   mediaUrl?: string | null;
   waMessageId?: string | null;
-}): Promise<boolean> {
+}): Promise<{ created: boolean; id: string | null }> {
   const db = serviceClient();
-  const { error } = await db.from(MSGS).insert({
-    lead_id: params.leadId,
-    phone: params.phone,
-    direction: "in",
-    role: params.role,
-    body: params.body,
-    media_url: params.mediaUrl ?? null,
-    wa_message_id: params.waMessageId ?? null,
-  });
+  const { data, error } = await db
+    .from(MSGS)
+    .insert({
+      lead_id: params.leadId,
+      phone: params.phone,
+      direction: "in",
+      role: params.role,
+      body: params.body,
+      media_url: params.mediaUrl ?? null,
+      wa_message_id: params.waMessageId ?? null,
+    })
+    .select("id")
+    .single();
 
   if (error) {
     // 23505 = unique_violation no wa_message_id → webhook duplicado, ignorar.
-    if (error.code === "23505") return false;
+    if (error.code === "23505") return { created: false, id: null };
     console.error("[outbound] logInbound failed", error);
-    return true; // erro não-duplicado: seguimos em frente mesmo assim
+    return { created: true, id: null }; // erro não-duplicado: seguimos em frente mesmo assim
   }
 
   if (params.leadId) {
@@ -45,7 +51,7 @@ export async function logInbound(params: {
       .update({ last_message_at: new Date().toISOString() })
       .eq("id", params.leadId);
   }
-  return true;
+  return { created: true, id: data?.id ?? null };
 }
 
 export type OutboundKind = "resposta" | "sistema" | "proativa" | "humano";
@@ -71,8 +77,20 @@ export interface SendOptions {
  * ids da mensagem e da linha da fila.
  */
 export async function sendOutbound(opts: SendOptions): Promise<{ mensagemId: string | null; filaId: string | null }> {
+  const partes = dividirCorpo(renderOptions(opts.body, opts.options ?? []));
+  if (partes.length === 1) return enfileirar(opts, partes[0], opts.enviarApos);
+  // Mais de 900 caracteres: uma linha por parte, 3 s entre elas para a ordem se manter.
+  const base = opts.enviarApos ?? new Date();
+  let primeiro: { mensagemId: string | null; filaId: string | null } | null = null;
+  for (const [i, parte] of partes.entries()) {
+    const r = await enfileirar(opts, parte, new Date(base.getTime() + i * 3_000));
+    primeiro ??= r;
+  }
+  return primeiro!;
+}
+
+async function enfileirar(opts: SendOptions, corpo: string, enviarApos: Date | undefined): Promise<{ mensagemId: string | null; filaId: string | null }> {
   const db = serviceClient();
-  const corpo = renderOptions(opts.body, opts.options ?? []);
   const kind: OutboundKind = opts.kind ?? (opts.role === "humano" ? "humano" : "resposta");
 
   const { data: msg, error: e1 } = await db
@@ -99,7 +117,7 @@ export async function sendOutbound(opts: SendOptions): Promise<{ mensagemId: str
       regra: opts.regra ?? null,
       corpo,
       mensagem_id: msg?.id ?? null,
-      ...(opts.enviarApos ? { enviar_apos: opts.enviarApos.toISOString() } : {}),
+      ...(enviarApos ? { enviar_apos: enviarApos.toISOString() } : {}),
     })
     .select("id")
     .single();

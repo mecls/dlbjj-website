@@ -28,8 +28,12 @@ const OPT_OUT_FRASES = [
   "parem de mandar",
   "parem de enviar",
 ];
-/** Valem sozinhas (a mensagem inteira), não dentro de uma frase. */
-const OPT_OUT_SOZINHAS = new Set(["parar", "para", "stop", "remover", "cancelar", "basta", "chega"]);
+/**
+ * Valem sozinhas (a mensagem inteira), não dentro de uma frase. "cancelar",
+ * "basta" e "chega" NÃO estão aqui: no passo de confirmação, "cancelar" é a
+ * forma natural de desistir de uma marcação, não de pedir silêncio para sempre.
+ */
+const OPT_OUT_SOZINHAS = new Set(["parar", "para", "stop", "remover"]);
 
 /**
  * "não quero" e "para de" só contam com contexto de mensagens — senão "não quero

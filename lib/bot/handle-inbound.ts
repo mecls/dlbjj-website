@@ -17,6 +17,7 @@ import { checkinSilencioso, continuarCheckin, iniciarCheckin } from "./checkin-f
 import { continuarPerfil, pedirPerfil } from "./perfil";
 import { dizer } from "./dizer";
 import { registarResposta } from "@/lib/reativacao/resposta";
+import { comRetrocesso } from "./retrocesso";
 import { logInbound } from "./outbound";
 import { interpret } from "./nlu";
 import { aulasPara } from "./schedule";
@@ -39,10 +40,10 @@ import { parsePrefill } from "./prefill";
  */
 export async function handleInbound(msg: InboundMessage): Promise<void> {
   const agora = msg.agora ? new Date(msg.agora) : new Date();
-  let lead = await getOrCreateLead(msg.from, msg.name);
+  const lead = await getOrCreateLead(msg.from, msg.name);
 
   // Idempotência: regista o inbound; se for reentrega (mesmo wa_message_id), sai.
-  const created = await logInbound({
+  const registo = await logInbound({
     leadId: lead.id,
     phone: msg.from,
     role: "lead",
@@ -50,8 +51,15 @@ export async function handleInbound(msg: InboundMessage): Promise<void> {
     mediaUrl: msg.mediaUrl,
     waMessageId: msg.waMessageId,
   });
-  if (!created) return;
+  if (!registo.created) return;
 
+  // Se alguma coisa falhar daqui para a frente, a linha de idempotência é
+  // apagada e o erro sobe: o worker volta a entregar (spec §14).
+  await comRetrocesso(registo.id, () => tratar(lead, msg, agora));
+}
+
+async function tratar(leadInicial: Lead, msg: InboundMessage, agora: Date): Promise<void> {
+  let lead = leadInicial;
   const text = (msg.text || "").trim();
   const ligado = await botEnabled();
 
@@ -86,16 +94,27 @@ export async function handleInbound(msg: InboundMessage): Promise<void> {
   // 5. Lead assumida por um humano → fica calado.
   if (lead.paused || lead.status === "humano") return;
 
-  // 6. Um telemóvel que já tem aluno(s) não faz onboarding: responde a dúvidas.
+  // 6. Áudio, foto ou outro conteúdo que não é texto: pedir texto, sem modelo.
+  if (text === "[áudio]" || text.startsWith("[áudio]")) {
+    await dizer(lead, "Não consigo ouvir áudios. Podes escrever por texto, por favor? 🙏");
+    if (lead.step !== "inicio" && lead.step !== "concluido") await reAsk(lead);
+    return;
+  }
+  if (text === "[foto recebida]" || text === "[mensagem não suportada]") {
+    await dizer(lead, "Só consigo ler texto. 🙂 Podes escrever?");
+    if (lead.step !== "inicio" && lead.step !== "concluido") await reAsk(lead);
+    return;
+  }
+
+  // 7. Uma lead dada como perdida que volta a escrever reabre no passo em que estava.
+  if (lead.status === "perdido") lead = await updateLead(lead.id, { status: "em_progresso" });
+
+  // 8. Um telemóvel que já tem aluno(s) não faz onboarding: responde a dúvidas.
   if (lead.step === "inicio" && (await alunosDoTelefone(lead.phone)).length > 0) {
     lead = await updateLead(lead.id, { step: "concluido", status: "inscrito" });
   }
 
-  try {
-    await advance(lead, msg);
-  } catch (err) {
-    console.error("[engine] advance failed", err);
-  }
+  await advance(lead, msg);
 }
 
 // ─────────────────────────── Máquina de estados ───────────────────────────

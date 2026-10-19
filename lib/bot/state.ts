@@ -107,10 +107,19 @@ export async function pauseForHuman(id: string, reason: string): Promise<void> {
   });
 }
 
+/** O estado a que uma lead volta quando o humano a larga: nunca "em progresso" se já estava feita. */
+export function statusAoRetomar(lead: Pick<Lead, "step" | "aluno_id">): "inscrito" | "concluido" | "em_progresso" {
+  if (lead.aluno_id) return "inscrito";
+  if (lead.step === "concluido") return "concluido";
+  return "em_progresso";
+}
+
 export async function resumeLead(id: string): Promise<Lead> {
+  const db = serviceClient();
+  const { data } = await db.from(LEADS).select("step,aluno_id").eq("id", id).single();
   return updateLead(id, {
     paused: false,
-    status: "em_progresso",
+    status: statusAoRetomar((data ?? { step: "inicio", aluno_id: null }) as Pick<Lead, "step" | "aluno_id">),
     human_reason: null,
     humano_ate: null,
   });

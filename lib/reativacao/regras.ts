@@ -112,7 +112,9 @@ export function avaliarRegras(ctx: Contexto): Acao[] {
   const escolher = ctx.escolher ?? ((v) => v[Math.floor(Math.random() * v.length)]);
   const acoes: Acao[] = [];
 
-  const toquesDe = (phone: string, regra: Regra) => ctx.toques.filter((t) => t.phone === phone && t.regra === regra);
+  // Um toque cancelado ou falhado nunca chegou à pessoa: não conta. Saltado conta (decisão do Daniel).
+  const toquesDe = (phone: string, regra: Regra) =>
+    ctx.toques.filter((t) => t.phone === phone && t.regra === regra && t.estado !== "cancelada" && t.estado !== "falhou");
   const tocado = (phone: string, regra: Regra, dentroDeMs?: number) =>
     toquesDe(phone, regra).some((t) => dentroDeMs === undefined || agora - new Date(t.created_at).getTime() < dentroDeMs);
   const permitido = (phone: string) => !phone.startsWith("anon:") && !ctx.optOuts.has(hashTelefone(phone));

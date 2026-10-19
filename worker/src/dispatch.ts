@@ -1,4 +1,4 @@
-import { applyHandoff } from "./inbound/handoff";
+import { applyHandoff, isRecentlyOurs } from "./inbound/handoff";
 import { encaminhar, type ForwardCtx } from "./inbound/forward";
 import { normalizarEntrada } from "./inbound/normalize";
 import { log, redigirTelefone } from "./log";
@@ -23,19 +23,39 @@ export interface DispatchCtx extends ForwardCtx {
 
 const FALHAS_JANELA_MS = 10 * 60_000;
 
-export function criarDispatcher(ctx: DispatchCtx): (event: string, data: unknown) => Promise<void> {
+export interface Dispatcher {
+  (event: string, data: unknown): Promise<void>;
+  /** Entradas que o worker não percebeu, por motivo — a deriva do gateway vê-se aqui. */
+  descartadas(): Record<string, number>;
+}
+
+export function criarDispatcher(ctx: DispatchCtx): Dispatcher {
   const falhas: number[] = [];
+  const descartadas: Record<string, number> = {};
   const { db } = ctx;
 
-  return async (event, data) => {
+  const dispatcher = (async (event: string, data: unknown) => {
     switch (event) {
       case "message.received": {
         const e = normalizarEntrada(data);
         if (e.kind === "descartar") {
-          log.debug("mensagem descartada", { motivo: e.motivo });
+          // "grupo" e "estado" são normais; o resto é deriva do payload ou @lid por resolver —
+          // a warn, e contado, porque o sintoma de o gateway mudar é o silêncio.
+          if (e.motivo === "grupo" || e.motivo === "estado") {
+            log.debug("mensagem descartada", { motivo: e.motivo });
+          } else {
+            descartadas[e.motivo] = (descartadas[e.motivo] ?? 0) + 1;
+            log.warn("entrada descartada", { motivo: e.motivo, total: descartadas[e.motivo] });
+          }
           return;
         }
         if (e.kind === "eco") return; // raro em message.received; tratado em message.sent
+        if (isRecentlyOurs(e.id)) {
+          // Guarda contra ciclos: se o `fromMe` desaparecer num payload, uma resposta nossa
+          // voltaria a entrar na app como mensagem da pessoa.
+          log.warn("message.received com o id de um envio nosso; ignorado", { id: e.id });
+          return;
+        }
         await db.rpc("dlbjj_incrementar_orcamento", { p_dia: hojeLisboa(), p_campo: "recebidas" });
         await encaminhar(ctx, { phone: e.phone, text: e.text, id: e.id, name: e.name }, e.id);
         return;
@@ -95,5 +115,7 @@ export function criarDispatcher(ctx: DispatchCtx): (event: string, data: unknown
       default:
         log.debug("evento ignorado", { event });
     }
-  };
+  }) as Dispatcher;
+  dispatcher.descartadas = () => ({ ...descartadas });
+  return dispatcher;
 }

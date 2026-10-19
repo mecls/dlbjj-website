@@ -2,7 +2,7 @@
 
 O que o agente faz, como está montado, e **o que ainda depende de ti** antes de
 entrar em produção. O código está feito e verificado (`npm run verify` corre
-tudo: typecheck, lint, 190+ testes unitários, de integração e ponta a ponta,
+tudo: typecheck, lint, 300+ testes unitários, de integração e ponta a ponta,
 incluindo um `next build` + `next start` sem segredos para provar que tudo
 falha fechado). A spec completa está em `dlbjj-build-spec.md`; o runbook da
 VPS em `docker/README.md`.
@@ -13,11 +13,14 @@ VPS em `docker/README.md`.
 
 1. **Criar o projeto Supabase dedicado da DL-BJJ** e correr, por ordem, no SQL
    Editor: `supabase/migrations/001_dlbjj_onboarding.sql`, `002_dlbjj_rls.sql`,
-   `003_dlbjj_alunos.sql` (todas idempotentes). Depois `npm run seed:turmas`
+   `003_dlbjj_alunos.sql`, `004_dlbjj_correcoes.sql` (todas idempotentes). Depois `npm run seed:turmas`
    com `.env.local` a apontar para lá (semeia as 14 turmas de `content/site.ts`).
-2. **Variáveis na Vercel** (Production + Preview): as de `.env.example` —
-   Supabase (3), `OLLAMA_API_KEY`, `APP_BASE_URL=https://www.dlbjj.org`,
-   `DLBJJ_WORKER_TOKEN`, `CRON_SECRET`, `DASHBOARD_PASSWORD`.
+2. **Variáveis na Vercel**: as de `.env.example` — Supabase (3),
+   `OLLAMA_API_KEY`, `APP_BASE_URL=https://www.dlbjj.org`, `DLBJJ_WORKER_TOKEN`,
+   `CRON_SECRET`, `DASHBOARD_PASSWORD`. **Só em Production.** Um deploy de
+   Preview conta como produção para as portas (fecha-se sem segredos), mas não
+   lhe dês a service role nem o token do worker: um preview com as chaves reais
+   é uma segunda app a escrever na fila verdadeira.
 3. **VPS**: clonar para `/opt/dlbjj`, preencher `docker/.env`, subir o gateway,
    criar a sessão, **emparelhar o 925 797 266 por código no telemóvel do Daniel**,
    subir o worker — passo a passo em `docker/README.md`.

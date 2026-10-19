@@ -2,6 +2,7 @@ import "server-only";
 import { createHash } from "node:crypto";
 import { serviceClient } from "@/lib/supabase/service";
 import { hojeLisboa, somarDias } from "@/lib/tempo";
+import { cancelarProativasPendentes } from "@/lib/reativacao/resposta";
 
 /**
  * Anonimização (spec §6.11): nunca se apaga; substitui-se o que identifica a
@@ -49,6 +50,7 @@ export async function anonimizarLead(id: string): Promise<void> {
 async function anonimizarTelefone(phone: string): Promise<void> {
   const db = serviceClient();
   const a = anon(phone);
+  await cancelarProativasPendentes(phone, "anonimizado");
   await db.from("dlbjj_mensagens").update({ body: "[anonimizado]", media_url: null, phone: a }).eq("phone", phone);
   await db.from("dlbjj_leads").update({ name: "Lead anonimizada", phone: a, collected: {}, human_reason: null }).eq("phone", phone);
   await db.from("dlbjj_fila_saida").update({ corpo: "[anonimizado]", phone: a }).eq("phone", phone);

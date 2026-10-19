@@ -90,3 +90,32 @@ describe("003_dlbjj_alunos", () => {
     expect(count).toBe(14);
   });
 });
+
+describe("004_dlbjj_correcoes", () => {
+  it("apagar uma linha da fila com um toque associado deixa o toque com fila_id a null", async () => {
+    const { data: f } = await sb.from("dlbjj_fila_saida").insert({ phone: "351999000003", kind: "proativa", regra: "R4", corpo: "x", estado: "enviada" }).select("id").single();
+    const { data: t } = await sb.from("dlbjj_toques").insert({ phone: "351999000003", regra: "R4", fila_id: f!.id, estado: "enviada" }).select("id").single();
+    const { error } = await sb.from("dlbjj_fila_saida").delete().eq("id", f!.id);
+    expect(error).toBeNull();
+    const { data: depois } = await sb.from("dlbjj_toques").select("fila_id,estado").eq("id", t!.id).single();
+    expect(depois).toEqual({ fila_id: null, estado: "enviada" });
+  });
+
+  it("um toque pode ficar cancelado", async () => {
+    const { error } = await sb.from("dlbjj_toques").insert({ phone: "351999000004", regra: "R1", estado: "cancelada" });
+    expect(error).toBeNull();
+  });
+
+  it("terminar_fila(pendente) limpa envio_iniciado_em para a linha voltar a ser reclamável", async () => {
+    const { data: f } = await sb
+      .from("dlbjj_fila_saida")
+      .insert({ phone: "351999000005", kind: "resposta", corpo: "x", estado: "a_enviar", locked_by: "w", locked_at: PASSADO, envio_iniciado_em: PASSADO, enviar_apos: PASSADO })
+      .select("id")
+      .single();
+    await sb.rpc("dlbjj_terminar_fila", { p_id: f!.id, p_estado: "pendente", p_erro: "503", p_enviar_apos: PASSADO });
+    const { data } = await sb.from("dlbjj_fila_saida").select("estado,envio_iniciado_em").eq("id", f!.id).single();
+    expect(data).toEqual({ estado: "pendente", envio_iniciado_em: null });
+    const { data: r } = await sb.rpc("dlbjj_reclamar_fila", { p_worker: "w2", p_agora: new Date().toISOString(), p_ttl: "10 minutes" });
+    expect(r?.some((x: { id: string }) => x.id === f!.id)).toBe(true);
+  });
+});

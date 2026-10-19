@@ -13,8 +13,15 @@ export async function GET(req: NextRequest) {
   const db = serviceClient();
   const d90 = new Date(Date.now() - 90 * 86_400_000).toISOString();
   const m12 = new Date(Date.now() - 365 * 86_400_000).toISOString();
-  await db.from("dlbjj_fila_saida").delete().lt("created_at", d90).in("estado", ["enviada", "falhou", "cancelada", "desconhecido"]);
-  await db.from("dlbjj_perguntas").delete().lt("created_at", m12);
-  await db.from("dlbjj_limites").delete().lt("expira_em", new Date().toISOString());
+  const limpezas = await Promise.all([
+    db.from("dlbjj_fila_saida").delete().lt("created_at", d90).in("estado", ["enviada", "falhou", "cancelada", "desconhecido"]),
+    db.from("dlbjj_perguntas").delete().lt("created_at", m12),
+    db.from("dlbjj_limites").delete().lt("expira_em", new Date().toISOString()),
+  ]);
+  const erros = limpezas.map((l) => l.error?.message).filter(Boolean);
+  if (erros.length) {
+    console.error("[cron/anonimizar] limpezas falharam", erros);
+    return NextResponse.json({ ok: false, ...r, erros }, { status: 500 });
+  }
   return NextResponse.json({ ok: true, ...r });
 }

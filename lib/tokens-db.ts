@@ -47,3 +47,30 @@ export async function marcarTokenUsado(token: string): Promise<void> {
   const db = serviceClient();
   await db.from(TOKENS).update({ usado_em: new Date().toISOString() }).eq("token_hash", hashToken(token));
 }
+
+/**
+ * Reclama um token de inscrição ATOMICAMENTE: um UPDATE condicional que só
+ * apanha a linha se ainda estiver por usar, por revogar e dentro do prazo.
+ * Dois pedidos ao mesmo tempo → só um recebe a linha; o outro vê 410.
+ */
+export async function reclamarTokenInscricao(token: string): Promise<TokenRow | null> {
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(token)) return null;
+  const db = serviceClient();
+  const agora = new Date().toISOString();
+  const { data } = await db
+    .from(TOKENS)
+    .update({ usado_em: agora })
+    .eq("token_hash", hashToken(token))
+    .eq("kind", "inscricao")
+    .is("usado_em", null)
+    .is("revogado_em", null)
+    .gt("expira_em", agora)
+    .select("*")
+    .maybeSingle();
+  return (data as TokenRow | null) ?? null;
+}
+
+/** Devolve um token reclamado cujo trabalho falhou, para a pessoa poder tentar outra vez. */
+export async function devolverToken(token: string): Promise<void> {
+  await serviceClient().from(TOKENS).update({ usado_em: null }).eq("token_hash", hashToken(token));
+}

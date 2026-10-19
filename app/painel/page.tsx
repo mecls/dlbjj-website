@@ -3,8 +3,10 @@ import { requireAuth } from "@/lib/auth";
 import { serviceClient } from "@/lib/supabase/service";
 import { Card, StatusBadge, timeAgo } from "@/components/painel/ui";
 import { MODALIDADE_LABEL } from "@/lib/bot/flow";
-import { STEP_LABEL, type Lead } from "@/lib/bot/types";
+import { STATUS_LABEL, STEP_LABEL, type Lead, type LeadStatus } from "@/lib/bot/types";
 import { localPorSlug } from "@/content/site";
+
+const ESTADOS: LeadStatus[] = ["novo", "em_progresso", "concluido", "inscrito", "humano", "perdido", "descartado"];
 
 export const dynamic = "force-dynamic";
 
@@ -15,8 +17,11 @@ function supabaseConfigured() {
   );
 }
 
-export default async function PainelPage() {
+export default async function PainelPage({ searchParams }: { searchParams?: Promise<{ estado?: string; q?: string }> }) {
   await requireAuth();
+  const sp = (await searchParams) ?? {};
+  const estado = ESTADOS.includes(sp.estado as LeadStatus) ? (sp.estado as LeadStatus) : "";
+  const q = (sp.q ?? "").trim().slice(0, 60);
 
   if (!supabaseConfigured()) {
     return (
@@ -32,11 +37,13 @@ export default async function PainelPage() {
   }
 
   const db = serviceClient();
-  const { data } = await db
-    .from("dlbjj_leads")
-    .select("*")
-    .order("last_message_at", { ascending: false })
-    .limit(200);
+  let consulta = db.from("dlbjj_leads").select("*").order("last_message_at", { ascending: false }).limit(200);
+  if (estado) consulta = consulta.eq("status", estado);
+  if (q) {
+    const termo = q.replace(/[%_,()*]/g, "");
+    consulta = consulta.or(`name.ilike.%${termo}%,phone.ilike.%${termo.replace(/\D/g, "") || termo}%`);
+  }
+  const { data, error } = await consulta;
   const leads = (data ?? []) as Lead[];
 
   return (
@@ -46,9 +53,30 @@ export default async function PainelPage() {
         <span className="text-sm text-neutral-500">{leads.length} leads</span>
       </div>
 
+      <form method="get" className="flex flex-wrap items-end gap-2 text-sm">
+        <label className="grid gap-1">
+          <span className="text-xs text-neutral-500">Estado</span>
+          <select name="estado" defaultValue={estado} className="rounded-lg border border-neutral-300 px-2 py-1.5">
+            <option value="">Todos</option>
+            {ESTADOS.map((e) => (
+              <option key={e} value={e}>
+                {STATUS_LABEL[e]}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="grid gap-1">
+          <span className="text-xs text-neutral-500">Nome ou telefone</span>
+          <input name="q" defaultValue={q} placeholder="Procurar" className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+        </label>
+        <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 hover:bg-neutral-50">Filtrar</button>
+      </form>
+
+      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Não foi possível ler as leads: {error.message}</p>}
+
       {leads.length === 0 ? (
         <Card className="p-8 text-center text-sm text-neutral-400">
-          Ainda não há leads. Quando alguém escrever no WhatsApp, aparece aqui.
+          {estado || q ? "Nenhuma lead com esse filtro." : "Ainda não há leads. Quando alguém escrever no WhatsApp, aparece aqui."}
         </Card>
       ) : (
         <div className="space-y-2">
@@ -64,6 +92,11 @@ export default async function PainelPage() {
                     {l.paused && (
                       <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
                         bot em pausa
+                      </span>
+                    )}
+                    {l.human_reason?.startsWith("Daniel respondeu") && (
+                      <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800">
+                        telemóvel
                       </span>
                     )}
                   </div>

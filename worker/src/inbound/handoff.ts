@@ -59,6 +59,26 @@ async function estaNaBd(db: Db, id: string): Promise<boolean> {
   return Boolean(m.data || f.data);
 }
 
+/**
+ * O eco pode chegar ANTES de o nosso `sendText` responder — nessa janela o id
+ * ainda não está no registo nem na BD. Mas o drainer marca `envio_iniciado_em`
+ * antes de enviar: uma linha `a_enviar` com envio iniciado, para este número e
+ * com este texto, é um envio nosso a meio. Sem isto era uma passagem de mão
+ * falsa: o bot calava-se 24 h por causa da sua própria resposta.
+ */
+async function envioNossoEmCurso(db: Db, phone: string, texto: string): Promise<boolean> {
+  const { data } = await db
+    .from("dlbjj_fila_saida")
+    .select("id")
+    .eq("phone", phone)
+    .eq("estado", "a_enviar")
+    .not("envio_iniciado_em", "is", null)
+    .eq("corpo", texto)
+    .limit(1)
+    .maybeSingle();
+  return Boolean(data);
+}
+
 export interface Eco {
   id: string;
   phone: string | null;
@@ -71,6 +91,10 @@ export type ResultadoHandoff = "ignorado" | "pausado" | "sem_telefone";
 export async function applyHandoff(db: Db, eco: Eco, pausaHoras: number): Promise<ResultadoHandoff> {
   if (isRecentlyOurs(eco.id)) return "ignorado";
   if (await estaNaBd(db, eco.id)) return "ignorado";
+  if (eco.phone && (await envioNossoEmCurso(db, eco.phone, eco.text))) {
+    log.debug("eco de um envio nosso ainda em curso", { phone: redigirTelefone(eco.phone) });
+    return "ignorado";
+  }
   if (!eco.phone) {
     log.warn("eco do Daniel num chat sem número (@lid); nada a pausar", { chatId: redigirTelefone(eco.chatId) });
     return "sem_telefone";

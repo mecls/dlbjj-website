@@ -26,6 +26,9 @@ describe("isOptOut", () => {
     "quero parar de treinar MMA e passar para NoGi",
     "preparar a inscrição",
     "o stop da minha mota avariou",
+    "cancelar",
+    "basta",
+    "chega",
     "1",
     "olá",
   ])("não confunde %j com opt-out", (texto) => {

@@ -26,7 +26,8 @@ describe("normalizarEntrada", () => {
   it("foto e áudio viram os textos de sempre", () => {
     expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "", type: "image" }))).toMatchObject({ text: "[foto recebida]" });
     expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "legenda", type: "image" }))).toMatchObject({ text: "legenda" });
-    expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "", type: "audio" }))).toMatchObject({ text: "[áudio] — podes escrever por texto, por favor?" });
+    expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "", type: "audio" }))).toMatchObject({ text: "[áudio]" });
+    expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "", type: "ptt" }))).toMatchObject({ text: "[áudio]" });
     expect(normalizarEntrada(mensagemRecebida({ phone: "351911111111", text: "", type: "sticker" }))).toMatchObject({ text: "[mensagem não suportada]" });
   });
 

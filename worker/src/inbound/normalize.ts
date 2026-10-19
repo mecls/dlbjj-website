@@ -65,7 +65,7 @@ function textoDe(m: z.infer<typeof IncomingSchema>): string {
     case "audio":
     case "voice":
     case "ptt":
-      return "[áudio] — podes escrever por texto, por favor?";
+      return "[áudio]"; // a app responde "podes escrever por texto" sem passar pelo modelo
     default:
       return corpo || "[mensagem não suportada]";
   }

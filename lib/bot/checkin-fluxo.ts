@@ -46,7 +46,10 @@ export async function iniciarCheckin(lead: Lead, agora: Date): Promise<void> {
   }
   if (alunos.length > 1) {
     const opcoes: OutboundOption[] = alunos.map((a) => ({ id: a.id, title: a.nome }));
-    opcoes.push({ id: "todos", title: alunos.length === 2 ? "Os dois" : "Todos" });
+    // "Os dois" só faz sentido quando treinam no mesmo espaço e tipo de aula;
+    // um adulto em São Brás e um miúdo na Amadora registam-se um de cada vez.
+    const mesmaAula = alunos.every((a) => a.local_slug === alunos[0].local_slug && a.publico === alunos[0].publico);
+    if (mesmaAula) opcoes.push({ id: "todos", title: alunos.length === 2 ? "Os dois" : "Todos" });
     await guardarEstado(lead, { fase: "quem", alunos: alunos.map((a) => a.id), criado: agora.toISOString() });
     await dizer(lead, "Para quem é a presença?", opcoes);
     return;
@@ -67,8 +70,9 @@ export async function continuarCheckin(lead: Lead, texto: string, agora: Date): 
 
   if (estado.fase === "quem") {
     const candidatos = estado.alunos.map((id) => todos.find((a) => a.id === id)).filter(Boolean) as AlunoPublico[];
+    const mesmaAula = candidatos.every((a) => a.local_slug === candidatos[0].local_slug && a.publico === candidatos[0].publico);
     let escolhidos: AlunoPublico[];
-    if (idx === candidatos.length) escolhidos = candidatos;
+    if (idx === candidatos.length && mesmaAula) escolhidos = candidatos;
     else if (candidatos[idx]) escolhidos = [candidatos[idx]];
     else {
       await dizer(lead, "Não percebi. Responde com o número.");

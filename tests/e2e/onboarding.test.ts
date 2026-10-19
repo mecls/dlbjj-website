@@ -84,6 +84,25 @@ describe("Jornada A — onboarding (AC-1)", () => {
   });
 });
 
+describe("Áudio e fotos", () => {
+  it("um áudio recebe o pedido para escrever e a pergunta repete-se, sem passar pelo modelo (I4)", async () => {
+    const phone = "351900000103";
+    for (const text of ["Olá", "Vera"]) await inject({ from: phone, text });
+    await inject({ from: phone, text: "[áudio]" });
+    const rows = await fila(phone);
+    expect(rows.at(-2)!.corpo).toBe("Não consigo ouvir áudios. Podes escrever por texto, por favor? 🙏");
+    expect(rows.at(-1)!.corpo).toContain("1. Para mim");
+    const { data: msgs } = await sb.from("dlbjj_mensagens").select("body").eq("phone", phone).eq("direction", "in");
+    expect(msgs!.map((m) => m.body)).toContain("[áudio]");
+  });
+  it("uma foto sem legenda recebe o aviso de texto", async () => {
+    const phone = "351900000104";
+    await inject({ from: phone, text: "[foto recebida]" });
+    const rows = await fila(phone);
+    expect(rows[0].corpo).toBe("Só consigo ler texto. 🙂 Podes escrever?");
+  });
+});
+
 describe("Jornada A′ — questão sensível passa ao Daniel", () => {
   it("pausa o bot e avisa a pessoa", async () => {
     const { phone } = await scenario("pergunta-sensivel");

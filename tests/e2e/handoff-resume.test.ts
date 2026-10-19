@@ -34,6 +34,23 @@ describe("Jornada G — passagem de mão e regresso (AC-3, metade da app)", () =
     expect((await filaDe(sb, phone)).length).toBe(antes);
   });
 
+  it("uma lead já confirmada que é retomada continua confirmada — não volta a ser alvo do R1 (C2)", async () => {
+    const { phone, id } = FIXTURES.leads.concluido; // Carla, concluida
+    await sb.from("dlbjj_leads").update({ paused: true, status: "humano", humano_ate: new Date(Date.now() - 60_000).toISOString() }).eq("id", id);
+    await inject({ from: phone, text: "Obrigada!" });
+    const { data } = await sb.from("dlbjj_leads").select("status,paused,step").eq("id", id).single();
+    expect(data).toEqual({ status: "concluido", paused: false, step: "concluido" });
+  });
+
+  it("uma lead perdida que volta a escrever reabre no passo em que estava (I9)", async () => {
+    const { phone, id } = FIXTURES.leads.emProgresso; // Bruno, passo horario
+    await sb.from("dlbjj_leads").update({ status: "perdido", paused: false, humano_ate: null }).eq("id", id);
+    await inject({ from: phone, text: "1" });
+    const { data } = await sb.from("dlbjj_leads").select("status,step").eq("id", id).single();
+    expect(data!.status).toBe("em_progresso");
+    expect(data!.step).toBe("origem");
+  });
+
   it("pausada para humano, um check-in continua a ser registado", async () => {
     const { phone, id } = FIXTURES.alunos.ana;
     await sb.from("dlbjj_leads").insert({ phone, name: "Ana Silva", step: "concluido", status: "humano", paused: true, humano_ate: new Date(Date.now() + 3_600_000).toISOString() });
