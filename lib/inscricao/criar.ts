@@ -15,10 +15,8 @@ export const TEXTO_CONFIRMACAO = (nome: string) =>
  * (kind sistema). Não há transação pela API REST; a ordem é a que deixa o
  * menor estrago se algo falhar a meio (o aluno existe antes de o token morrer).
  */
-export async function criarAluno(token: string, leadId: string | null, dados: DadosInscricao): Promise<string> {
+async function inserirAluno(dados: DadosInscricao, leadId: string | null, inicioEm: string): Promise<string> {
   const db = serviceClient();
-  const hoje = hojeLisboa();
-
   const { data: aluno, error } = await db
     .from("dlbjj_alunos")
     .insert({
@@ -41,15 +39,27 @@ export async function criarAluno(token: string, leadId: string | null, dados: Da
       condicoes_saude: dados.condicoes_saude,
       consentimento_rgpd_em: new Date().toISOString(),
       consentimento_imagem: dados.consentimento_imagem,
-      inicio_em: hoje,
+      inicio_em: inicioEm,
       estado: "ativo",
       lead_id: leadId,
     })
     .select("id")
     .single();
   if (error || !aluno) throw new Error(`criarAluno: ${error?.message ?? "sem linha"}`);
+  await db.from("dlbjj_graduacoes").insert({ aluno_id: aluno.id, faixa: dados.faixa, graus: dados.graus, atribuida_em: inicioEm, nota: "inscrição" });
+  return aluno.id;
+}
 
-  await db.from("dlbjj_graduacoes").insert({ aluno_id: aluno.id, faixa: dados.faixa, graus: dados.graus, atribuida_em: hoje, nota: "inscrição" });
+/** Criação manual no painel: sem token, sem lead, sem mensagem. */
+export async function criarAlunoManual(dados: DadosInscricao, inicioEm?: string | null): Promise<string> {
+  return inserirAluno(dados, null, inicioEm || hojeLisboa());
+}
+
+export async function criarAluno(token: string, leadId: string | null, dados: DadosInscricao): Promise<string> {
+  const db = serviceClient();
+  const hoje = hojeLisboa();
+  const alunoId = await inserirAluno(dados, leadId, hoje);
+  const aluno = { id: alunoId };
   await marcarTokenUsado(token);
 
   if (leadId) {

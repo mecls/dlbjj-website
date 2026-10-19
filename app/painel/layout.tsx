@@ -23,9 +23,17 @@ export default function PainelLayout({
               DL-BJJ
             </span>
             <span className="text-sm font-semibold text-neutral-700">
-              Inscrições
+              Painel
             </span>
           </Link>
+          <nav className="flex gap-3 text-sm text-neutral-600">
+            <Link href="/painel" className="hover:text-neutral-900">Inscrições</Link>
+            <Link href="/painel/alunos" className="hover:text-neutral-900">Alunos</Link>
+            <Link href="/painel/aulas" className="hover:text-neutral-900">Aulas</Link>
+            <Link href="/painel/reativacao" className="hover:text-neutral-900">Reativação</Link>
+            <Link href="/painel/perguntar" className="hover:text-neutral-900">Perguntar</Link>
+            <Link href="/painel/agente" className="hover:text-neutral-900">Agente</Link>
+          </nav>
           <form action={logoutAction} className="ml-auto">
             <button className="text-xs text-neutral-500 hover:text-neutral-800">
               Sair

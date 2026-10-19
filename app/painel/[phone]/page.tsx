@@ -106,6 +106,13 @@ export default async function LeadPage({
               <Linha rotulo="Nota" valor={lead.human_reason} />
             )}
           </dl>
+          {lead.aluno_id && (
+            <p className="mt-3 text-sm">
+              <Link href={`/painel/alunos/${lead.aluno_id}`} className="text-dl-red hover:underline">
+                Ver aluno →
+              </Link>
+            </p>
+          )}
 
           <div className="mt-5 border-t border-neutral-100 pt-4">
             <LeadActions phone={lead.phone} paused={lead.paused} />
