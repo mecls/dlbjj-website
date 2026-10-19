@@ -55,6 +55,21 @@ export type Lead = {
   updated_at: string;
 };
 
+/**
+ * Mensagem que chega do WhatsApp (via worker) ou do simulador, normalizada
+ * numa só forma que o motor entende.
+ */
+export interface InboundMessage {
+  from: string; // E.164 só dígitos, sem '+'
+  text: string;
+  /** id de opção, quando um cenário/simulador o manda diretamente. */
+  buttonId?: string;
+  mediaUrl?: string;
+  waMessageId?: string;
+  /** nome de perfil do WhatsApp, se disponível */
+  name?: string;
+}
+
 export type MessageDirection = "in" | "out";
 export type MessageRole = "lead" | "bot" | "humano";
 

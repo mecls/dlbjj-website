@@ -1,24 +1,24 @@
 import "server-only";
 import type { NextRequest } from "next/server";
-import { hasWhatsApp, isProduction } from "@/lib/config";
+import crypto from "node:crypto";
+import { APP, isProduction } from "@/lib/config";
 
 /**
  * Quem pode injetar mensagens no motor pelo simulador.
  *
- * As rotas /api/sim/* metem mensagens no MESMO motor que o webhook real usa. Não
- * são inofensivas assim que o WhatsApp estiver ligado: `handleInbound` acaba em
- * `sendOutbound`, que usa o transporte real — ou seja, uma rota aberta manda
- * mensagens a partir do número da academia, para o número que quem chama
- * escolher, e enche o painel de leads falsas.
+ * As rotas /api/sim/* metem mensagens no MESMO motor que o worker usa. Com o
+ * WhatsApp ligado, uma rota aberta enche a fila de saída de mensagens para o
+ * número que quem chama escolher, e o painel de leads falsas.
  *
  * Regra:
- *  - CRON_SECRET definido → é preciso o cabeçalho `x-sim-secret` a bater.
- *  - Sem segredo → só em desenvolvimento E só enquanto o WhatsApp real não
- *    estiver configurado. É este o caso da Fase 3 (provar o loop no simulador),
- *    que assim continua a funcionar sem fricção nenhuma.
+ *  - `x-sim-secret` igual a CRON_SECRET → permitido (também em produção).
+ *  - Senão → só fora de produção.
  */
 export function simAllowed(req: NextRequest): boolean {
-  const secret = process.env.CRON_SECRET;
-  if (secret) return req.headers.get("x-sim-secret") === secret;
-  return !isProduction() && !hasWhatsApp();
+  const secret = APP.cronSecret();
+  const dado = req.headers.get("x-sim-secret") ?? "";
+  if (secret && dado.length === secret.length && crypto.timingSafeEqual(Buffer.from(dado), Buffer.from(secret))) {
+    return true;
+  }
+  return !isProduction();
 }

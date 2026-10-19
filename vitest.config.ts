@@ -14,6 +14,7 @@ export default defineConfig({
     environment: "node",
     include: ["tests/**/*.test.ts"],
     setupFiles: ["tests/helpers/env.ts"],
+    globalSetup: ["tests/helpers/global-e2e.ts"],
     testTimeout: 30_000,
     hookTimeout: 120_000,
     // Os testes de integração e e2e partilham uma base de dados local; correm

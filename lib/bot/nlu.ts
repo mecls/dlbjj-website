@@ -2,7 +2,8 @@ import "server-only";
 import OpenAI from "openai";
 import { OLLAMA } from "@/lib/config";
 import { contactos, horarioFuncionamento, locais, programas } from "@/content/site";
-import type { OutboundOption } from "@/lib/messaging/provider";
+import type { OutboundOption } from "./options";
+import { interpretFake } from "@/lib/llm/fake";
 import type { Lead } from "./types";
 import { describeStep } from "./flow";
 
@@ -123,6 +124,8 @@ export async function interpret(
   text: string,
   options: OutboundOption[],
 ): Promise<NluResult> {
+  if (OLLAMA.fake()) return interpretFake(text);
+
   const opcoes = options.length
     ? options
         .map(

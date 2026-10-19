@@ -10,7 +10,7 @@
     "typecheck": "tsc --noEmit",
     "test:unit": "vitest run tests/unit",
     "test:integration": "vitest run tests/integration",
-    "test:e2e": "vitest run tests/e2e",
+    "test:e2e": "VITEST_E2E=1 vitest run tests/e2e",
     "seed:turmas": "tsx scripts/seed-turmas.ts",
     "seed:turmas:check": "tsx scripts/seed-turmas.ts --check",
     "verify": "npm run typecheck && npm run lint && npm run seed:turmas:check && npm run test:unit && npm run test:integration && npm run test:e2e && (cd worker && npm run typecheck && npm test) && docker compose -f docker/docker-compose.yml --env-file docker/.env.example config -q"

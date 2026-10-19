@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import type { InboundMessage } from "@/lib/messaging/provider";
+import type { InboundMessage } from "@/lib/bot/types";
 import { handleInbound } from "@/lib/bot/handle-inbound";
 import { simAllowed } from "@/lib/sim-guard";
 

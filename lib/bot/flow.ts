@@ -1,4 +1,4 @@
-import type { OutboundOption } from "@/lib/messaging/provider";
+import type { OutboundOption } from "./options";
 import type { Lead, Modalidade, Publico, Step } from "./types";
 import { aulasPara, locaisPara, localPorSlug } from "./schedule";
 

@@ -1,6 +1,7 @@
 import "server-only";
-import type { InboundMessage, OutboundOption } from "@/lib/messaging/provider";
-import type { Lead, Modalidade, Publico, Step } from "./types";
+import type { OutboundOption } from "./options";
+import type { InboundMessage, Lead, Modalidade, Publico, Step } from "./types";
+import { resolveOptionText } from "./resolve";
 import {
   botEnabled,
   getOrCreateLead,
@@ -198,20 +199,19 @@ function horarioOpts(lead: Lead): OutboundOption[] {
 async function sendStep(lead: Lead, step: Step): Promise<void> {
   await setStep(lead.id, step);
   const p = promptFor({ ...lead, step });
-  await say(lead, p.text, p.options, p.listLabel);
+  await say(lead, p.text, p.options);
 }
 
 /** Repete a pergunta do passo atual (sem mudar de estado). */
 async function reAsk(lead: Lead): Promise<void> {
   const p = promptFor(lead);
-  await say(lead, p.text, p.options, p.listLabel);
+  await say(lead, p.text, p.options);
 }
 
 async function say(
   lead: Lead,
   text: string,
   options: OutboundOption[] = [],
-  listLabel?: string,
 ): Promise<void> {
   await sendOutbound({
     leadId: lead.id,
@@ -219,7 +219,6 @@ async function say(
     role: "bot",
     body: text,
     options: options.length ? options : undefined,
-    listLabel,
   });
 }
 
@@ -243,6 +242,10 @@ async function resolvePick(
     await reAsk(lead);
     return null;
   }
+
+  // Um dígito ou o título da opção resolve-se sem modelo (spec §4.0).
+  const direto = resolveOptionText(text, options);
+  if (direto) return direto;
 
   // Texto livre → o LLM interpreta.
   const res = await interpret(lead, text, options);
@@ -271,7 +274,7 @@ async function resolvePick(
     return res.match_id;
   }
 
-  await say(lead, "Desculpa, não percebi bem. 🙂 Podes escolher uma das opções?");
+  await say(lead, "Desculpa, não percebi bem. 🙂 Responde com o número da opção.");
   await reAsk(lead);
   return null;
 }
