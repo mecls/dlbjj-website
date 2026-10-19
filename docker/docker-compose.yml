@@ -1,0 +1,142 @@
+# DL-BJJ — o agente na VPS: dois containers.
+#
+#   ┌──────────────┐  webhook   ┌──────────────┐  HTTPS   ┌──────────────┐
+#   │  openwa-api  │───────────▶│ dlbjj-worker │─────────▶│  app (Vercel)│
+#   │  (WhatsApp)  │◀───────────│              │◀─ fila ──│  + Supabase  │
+#   └──────────────┘   REST     └──────────────┘          └──────────────┘
+#
+# Vive na MESMA máquina que a ARwatches, como projeto Compose SEPARADO:
+#   COMPOSE_PROJECT_NAME=dlbjj, rede dlbjj-agent, volume dlbjj-openwa-data,
+#   gateway em 127.0.0.1:2786 (a ARwatches usa 2785), worker na porta 4001
+#   (a ARwatches usa 4000). Nada é partilhado — nem chaves, nem sessão.
+#
+# Portas publicadas só em loopback: a API do gateway envia mensagens como a
+# academia e nunca pode ficar virada para a internet. O worker é sempre ele a
+# ligar para fora (Vercel e Supabase).
+#
+# Imagens fixadas por tag. Antes de produção, fixar por digest:
+#   docker buildx imagetools inspect ghcr.io/rmyndharis/openwa:0.14.4
+#   image: ghcr.io/rmyndharis/openwa:0.14.4@sha256:<digest>
+
+name: dlbjj
+
+services:
+  openwa-api:
+    image: ghcr.io/rmyndharis/openwa:0.14.4
+    container_name: dlbjj-openwa
+    restart: unless-stopped
+    # O driver json-file NÃO roda por omissão: sem isto o disco enche.
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    # O fecho gracioso do motor excede os 10 s do Docker; matá-lo a meio deixa
+    # o perfil da sessão órfão e obriga a emparelhar outra vez.
+    stop_grace_period: 45s
+    init: true
+    networks: [agent]
+    ports:
+      - "127.0.0.1:${OPENWA_PORT:-2786}:2785"
+    environment:
+      NODE_ENV: production
+      PORT: 2785
+      LOG_LEVEL: ${OPENWA_LOG_LEVEL:-info}
+      # Baileys, não whatsapp-web.js: um processo, sem Chromium.
+      ENGINE_TYPE: baileys
+      SESSION_DATA_PATH: /app/data/sessions
+      AUTO_START_SESSIONS: "true"
+      # A variável mais importante deste ficheiro: o número NUNCA fica
+      # permanentemente online. Esse é o padrão que a deteção sinaliza.
+      BAILEYS_MARK_ONLINE_ON_CONNECT: "false"
+      BAILEYS_SYNC_FULL_HISTORY: "false"
+      # Resolve ids de privacidade (@lid) para número quando o motor consegue;
+      # a app só identifica pessoas por telefone.
+      RESOLVE_LID_TO_PHONE: "true"
+      BODY_SIZE_LIMIT: 16mb
+      DATABASE_TYPE: sqlite
+      DATABASE_NAME: /app/data/openwa.sqlite
+      DATABASE_SYNCHRONIZE: "true"
+      POSTGRES_BUILTIN: "false"
+      REDIS_ENABLED: "false"
+      REDIS_BUILTIN: "false"
+      QUEUE_ENABLED: "false"
+      CACHE_ENABLED: "false"
+      MINIO_BUILTIN: "false"
+      STORAGE_TYPE: local
+      STORAGE_LOCAL_PATH: /app/data/media
+      WEBHOOK_TIMEOUT: "10000"
+      WEBHOOK_RETRY_DELAY: "5000"
+      WEBHOOK_MAX_PAYLOAD_BYTES: "2097152"
+      API_MASTER_KEY: ${OPENWA_API_KEY:?define OPENWA_API_KEY em docker/.env}
+      SERVE_DASHBOARD: "false"
+      SSRF_ALLOWED_HOSTS: ${OPENWA_SSRF_ALLOWED_HOSTS:-dlbjj-worker}
+    volumes:
+      - openwa-data:/app/data
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://localhost:2785/api/health/ready',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  dlbjj-worker:
+    build:
+      context: ../worker
+    image: dlbjj-worker:local
+    container_name: dlbjj-worker
+    restart: unless-stopped
+    logging:
+      driver: json-file
+      options:
+        max-size: "10m"
+        max-file: "5"
+    networks: [agent]
+    depends_on:
+      openwa-api:
+        condition: service_healthy
+    # Tempo para o index.ts acabar um envio a meio e libertar os leases.
+    stop_grace_period: 120s
+    environment:
+      SUPABASE_URL: ${SUPABASE_URL:?define SUPABASE_URL em docker/.env}
+      SUPABASE_SERVICE_ROLE_KEY: ${SUPABASE_SERVICE_ROLE_KEY:?define SUPABASE_SERVICE_ROLE_KEY em docker/.env}
+      APP_BASE_URL: ${APP_BASE_URL:?define APP_BASE_URL em docker/.env}
+      DLBJJ_WORKER_TOKEN: ${DLBJJ_WORKER_TOKEN:?define DLBJJ_WORKER_TOKEN em docker/.env}
+      # O gateway pela rede do compose, não pela porta publicada.
+      OPENWA_BASE_URL: http://openwa-api:2785
+      OPENWA_API_KEY: ${OPENWA_API_KEY:?define OPENWA_API_KEY em docker/.env}
+      # O UUID que POST /api/sessions devolveu — só existe depois do passo 3 do README.
+      OPENWA_SESSION_ID: ${OPENWA_SESSION_ID:?define OPENWA_SESSION_ID em docker/.env}
+      OPENWA_WEBHOOK_SECRET: ${OPENWA_WEBHOOK_SECRET:?define OPENWA_WEBHOOK_SECRET em docker/.env}
+      WORKER_PORT: "4001"
+      WORKER_WEBHOOK_PATH: /webhooks/openwa
+      # Como o gateway chega ao worker: o nome do serviço na rede do compose.
+      WORKER_PUBLIC_URL: http://dlbjj-worker:4001
+      WORKER_ID: ${WORKER_ID:-dlbjj-worker-1}
+      WORKER_REGISTER_WEBHOOK: ${WORKER_REGISTER_WEBHOOK:-true}
+      WORKER_DRAIN_INTERVAL_MS: ${WORKER_DRAIN_INTERVAL_MS:-15000}
+      WORKER_HEARTBEAT_INTERVAL_MS: ${WORKER_HEARTBEAT_INTERVAL_MS:-60000}
+      WORKER_HUMANIZE: ${WORKER_HUMANIZE:-1}
+      LOG_LEVEL: ${WORKER_LOG_LEVEL:-info}
+    healthcheck:
+      test:
+        - CMD
+        - node
+        - -e
+        - "require('http').get('http://127.0.0.1:4001/health',r=>process.exit(r.statusCode===200?0:1)).on('error',()=>process.exit(1))"
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 15s
+
+networks:
+  agent:
+    name: dlbjj-agent
+
+volumes:
+  openwa-data:
+    name: dlbjj-openwa-data
