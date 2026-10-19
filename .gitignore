@@ -45,3 +45,6 @@ next-env.d.ts
 
 # Fotos originais (não vão para o site)
 fotos-originais/
+
+# Ambiente de testes: só o Supabase local (chaves demo públicas) e fakes — sem segredos.
+!.env.test

@@ -1,0 +1,92 @@
+import { beforeAll, describe, expect, it } from "vitest";
+import { createHash } from "node:crypto";
+import { db, FIXTURES, resetDb } from "../helpers/db";
+
+const sb = db();
+// O relógio do container pode estar uns ms à frente do do host; uma linha "pronta"
+// é inserida com enviar_apos no passado para o teste não depender disso.
+const PASSADO = new Date(Date.now() - 60_000).toISOString();
+
+beforeAll(() => {
+  resetDb();
+});
+
+describe("003_dlbjj_alunos", () => {
+  it("recusa uma segunda presença do mesmo aluno na mesma turma no mesmo dia", async () => {
+    const { data: turma } = await sb
+      .from("dlbjj_turmas")
+      .select("id")
+      .eq("chave", "sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30")
+      .single();
+    const linha = { aluno_id: FIXTURES.alunos.ana.id, turma_id: turma!.id, data: "2026-09-07", origem: "whatsapp" };
+    const primeira = await sb.from("dlbjj_presencas").insert(linha);
+    expect(primeira.error).toBeNull();
+    const segunda = await sb.from("dlbjj_presencas").insert(linha);
+    expect(segunda.error?.code).toBe("23505");
+  });
+
+  it("recusa alterar uma graduação (tabela só de acrescentar)", async () => {
+    const { data: g } = await sb
+      .from("dlbjj_graduacoes")
+      .select("id")
+      .eq("aluno_id", FIXTURES.alunos.ana.id)
+      .limit(1)
+      .single();
+    const { error } = await sb.from("dlbjj_graduacoes").update({ graus: 4 }).eq("id", g!.id);
+    expect(error?.message).toMatch(/só de acrescentar/);
+  });
+
+  it("entrega uma linha pendente a exatamente um de dois workers", async () => {
+    await sb.from("dlbjj_fila_saida").insert({ phone: "351999000001", kind: "resposta", corpo: "olá", enviar_apos: PASSADO });
+    const agora = new Date().toISOString();
+    const [a, b] = await Promise.all([
+      sb.rpc("dlbjj_reclamar_fila", { p_worker: "w1", p_agora: agora, p_ttl: "10 minutes" }),
+      sb.rpc("dlbjj_reclamar_fila", { p_worker: "w2", p_agora: agora, p_ttl: "10 minutes" }),
+    ]);
+    expect(a.error).toBeNull();
+    expect(b.error).toBeNull();
+    const total = (a.data?.length ?? 0) + (b.data?.length ?? 0);
+    expect(total).toBe(1);
+    const ganhou = a.data?.length ? a.data[0] : b.data![0];
+    expect(ganhou.estado).toBe("a_enviar");
+  });
+
+  it("nunca entrega uma proativa a um número com opt-out", async () => {
+    const hash = createHash("sha256").update(FIXTURES.optOutPhone).digest("hex");
+    const { data: opt } = await sb.from("dlbjj_opt_outs").select("phone_hash").eq("phone_hash", hash).single();
+    expect(opt).not.toBeNull();
+    await sb.from("dlbjj_fila_saida").insert({ phone: FIXTURES.optOutPhone, kind: "proativa", regra: "R4", corpo: "volta", enviar_apos: PASSADO });
+    const { data } = await sb.rpc("dlbjj_reclamar_fila", { p_worker: "w1", p_agora: new Date().toISOString(), p_ttl: "10 minutes" });
+    expect(data?.some((r: { phone: string }) => r.phone === FIXTURES.optOutPhone)).toBe(false);
+  });
+
+  it("entrega uma resposta ao mesmo número com opt-out (o opt-out só trava proativas)", async () => {
+    await sb.from("dlbjj_fila_saida").insert({ phone: FIXTURES.optOutPhone, kind: "resposta", corpo: "entendido", enviar_apos: PASSADO });
+    const { data } = await sb.rpc("dlbjj_reclamar_fila", { p_worker: "w1", p_agora: new Date().toISOString(), p_ttl: "10 minutes" });
+    expect(data?.some((r: { phone: string; kind: string }) => r.phone === FIXTURES.optOutPhone && r.kind === "resposta")).toBe(true);
+  });
+
+  it("terminar_fila sobe tentativas e espelha o estado na mensagem", async () => {
+    const { data: msg } = await sb
+      .from("dlbjj_mensagens")
+      .insert({ phone: "351999000002", direction: "out", role: "bot", body: "x", estado: "na_fila" })
+      .select("id")
+      .single();
+    const { data: fila } = await sb
+      .from("dlbjj_fila_saida")
+      .insert({ phone: "351999000002", kind: "resposta", corpo: "x", mensagem_id: msg!.id })
+      .select("id")
+      .single();
+    const { error } = await sb.rpc("dlbjj_terminar_fila", { p_id: fila!.id, p_estado: "enviada", p_wa_message_id: "wamid.1" });
+    expect(error).toBeNull();
+    const { data: f } = await sb.from("dlbjj_fila_saida").select("estado,tentativas,wa_message_id,locked_by").eq("id", fila!.id).single();
+    expect(f).toMatchObject({ estado: "enviada", tentativas: 1, wa_message_id: "wamid.1", locked_by: null });
+    const { data: m } = await sb.from("dlbjj_mensagens").select("estado,wa_message_id").eq("id", msg!.id).single();
+    expect(m).toMatchObject({ estado: "enviada", wa_message_id: "wamid.1" });
+  });
+
+  it("tem as 14 turmas de content/site.ts", async () => {
+    const { count } = await sb.from("dlbjj_turmas").select("*", { count: "exact", head: true }).eq("ativa", true);
+    expect(count).toBe(14);
+  });
+});
