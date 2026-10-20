@@ -98,6 +98,60 @@ select v.aluno_id::uuid, t.id, current_date - v.ha_dias, v.origem
   join dlbjj_turmas t on t.chave = v.chave
 on conflict (aluno_id, turma_id, data) do nothing;
 
+-- ── Presenças antigas (31–70 dias): dão vida aos mapas de calor, aos dias
+--    seguidos e ao ranking "desde sempre" sem mexer nas contagens a 30 dias
+--    que tests/integration/ranking.test.ts fixa. ──
+insert into dlbjj_presencas (aluno_id, turma_id, data, origem)
+select v.aluno_id::uuid, t.id, current_date - v.ha_dias, 'whatsapp'
+  from (values
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          32),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   34),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          37),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   39),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          44),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   46),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          51),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   53),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          58),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   60),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30',          65),
+    ('b0000000-0000-0000-0000-000000000001', 'sao-bras|Jiu-Jitsu|Segunda, Quarta e Sexta|06:00',   67),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 33),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 36),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 40),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 43),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 47),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 50),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 54),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 61),
+    ('b0000000-0000-0000-0000-000000000002', 'queluz|Jiu-Jitsu (Adultos)|Terça, Quarta e Sexta|08:00', 68),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    31),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    33),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    38),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    40),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    45),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    47),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    52),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    59),
+    ('b0000000-0000-0000-0000-000000000003', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    66),
+    ('b0000000-0000-0000-0000-000000000004', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    33),
+    ('b0000000-0000-0000-0000-000000000004', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    40),
+    ('b0000000-0000-0000-0000-000000000004', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    47),
+    ('b0000000-0000-0000-0000-000000000004', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    54),
+    ('b0000000-0000-0000-0000-000000000004', 'kids-amadora|Kids|Segunda, Quarta e Sexta|18:30',    61)
+  ) as v(aluno_id, chave, ha_dias)
+  join dlbjj_turmas t on t.chave = v.chave
+on conflict (aluno_id, turma_id, data) do nothing;
+
+-- ── Eventos (um só de Queluz, um de toda a academia) ──
+insert into dlbjj_eventos (id, titulo, local_slug, dia, hora)
+select v.id::uuid, v.titulo, v.local_slug, current_date + v.daqui_a, v.hora::time
+  from (values
+    ('c0000000-0000-0000-0000-000000000001', 'Seminário de guarda com convidado', 'queluz', 5,  '10:00'),
+    ('c0000000-0000-0000-0000-000000000002', 'Graduação de fim de ano',           null,     20, '18:00')
+  ) as v(id, titulo, local_slug, daqui_a, hora)
+ where not exists (select 1 from dlbjj_eventos);
+
 -- ── Um opt-out (número que pediu para não receber mais) ──
 insert into dlbjj_opt_outs (phone_hash, motivo)
 values (encode(digest('351930000009', 'sha256'), 'hex'), 'fixture')

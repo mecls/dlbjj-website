@@ -36,7 +36,7 @@ tudo no ramo `agente-openwa`, **por publicar**. Nada em produção mudou ainda.
 
 ## Fase 2 — Base de dados dedicada · **Miguel**
 
-- [ ] Criar o projeto Supabase da DL-BJJ. Correr `001`, `002`, `003`, `004` no SQL Editor.
+- [ ] Criar o projeto Supabase da DL-BJJ. Correr `001`, `002`, `003`, `004`, `005` no SQL Editor.
 - [ ] `.env.local` com as 3 chaves → `npm run seed:turmas` → `npm run seed:turmas:check`.
 - [ ] Vercel (**só Production**, nunca Preview): `NEXT_PUBLIC_SUPABASE_URL`,
       `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE_SERVICE_ROLE_KEY`, `OLLAMA_API_KEY`,

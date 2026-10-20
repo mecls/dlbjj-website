@@ -13,7 +13,7 @@ VPS em `docker/README.md`.
 
 1. **Criar o projeto Supabase dedicado da DL-BJJ** e correr, por ordem, no SQL
    Editor: `supabase/migrations/001_dlbjj_onboarding.sql`, `002_dlbjj_rls.sql`,
-   `003_dlbjj_alunos.sql`, `004_dlbjj_correcoes.sql` (todas idempotentes). Depois `npm run seed:turmas`
+   `003_dlbjj_alunos.sql`, `004_dlbjj_correcoes.sql`, `005_dlbjj_area_aluno.sql` (todas idempotentes). Depois `npm run seed:turmas`
    com `.env.local` a apontar para lá (semeia as 14 turmas de `content/site.ts`).
 2. **Variáveis na Vercel**: as de `.env.example` — Supabase (3),
    `OLLAMA_API_KEY`, `APP_BASE_URL=https://www.dlbjj.org`, `DLBJJ_WORKER_TOKEN`,

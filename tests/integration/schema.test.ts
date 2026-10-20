@@ -119,3 +119,21 @@ describe("004_dlbjj_correcoes", () => {
     expect(r?.some((x: { id: string }) => x.id === f!.id)).toBe(true);
   });
 });
+
+describe("005_dlbjj_area_aluno", () => {
+  it("tem as tabelas de códigos, sessões e eventos, e as fixtures", async () => {
+    const codigo = await sb.from("dlbjj_codigos_login").insert({ phone: "351920000001", codigo_hash: "x".repeat(64), expira_em: new Date(Date.now() + 600_000).toISOString() }).select("id,tentativas").single();
+    expect(codigo.error).toBeNull();
+    expect(codigo.data!.tentativas).toBe(0);
+    const sessao = await sb.from("dlbjj_sessoes_aluno").insert({ token_hash: "s".repeat(64), phone: "351920000001", aluno_id: FIXTURES.alunos.ana.id, expira_em: new Date(Date.now() + 600_000).toISOString() });
+    expect(sessao.error).toBeNull();
+    const { data: eventos } = await sb.from("dlbjj_eventos").select("id,titulo,local_slug,hora").order("dia");
+    expect(eventos).toHaveLength(2);
+    expect(eventos![0]).toMatchObject({ id: FIXTURES.eventos.seminario.id, local_slug: "queluz", hora: "10:00:00" });
+    expect(eventos![1]).toMatchObject({ id: FIXTURES.eventos.graduacao.id, local_slug: null });
+    const { count } = await sb.from("dlbjj_presencas").select("*", { count: "exact", head: true }).eq("aluno_id", FIXTURES.alunos.rui.id);
+    expect(count).toBe(14); // 5 recentes + 9 antigas (a Ana recebe uma presença extra no teste da 003)
+    const { data: ana } = await sb.from("dlbjj_alunos").select("ranking_visivel").eq("id", FIXTURES.alunos.ana.id).single();
+    expect(ana!.ranking_visivel).toBe(true);
+  });
+});
