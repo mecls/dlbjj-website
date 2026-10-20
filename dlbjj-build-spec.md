@@ -589,6 +589,8 @@ Not built because §2 excluded it: payments, Instagram, native app, capacity/boo
 
 **2026-10-20 — Área do aluno e painel novo.** Built after this spec, from its own design document: `docs/superpowers/specs/2026-10-20-area-do-aluno-design.md` (login by phone + WhatsApp code, 90-day sessions, Início/Histórico/Ranking/Calendário, events, the painel rebuilt on a shared shell with a dashboard and conversations under `/painel/mensagens`, migration `005`). The `perfil` link became single-use with a confirm page; §3 F's "ficha" is now that area. Everything else in this spec still holds.
 
+**2026-10-20 — Ajustes do painel após o primeiro teste.** `docs/superpowers/specs/2026-10-20-painel-ajustes-design.md`: Início sem o cartão do agente (o sino acende com batimento parado), conversa ao centro com painel lateral e resumo pelo modelo (tabela `dlbjj_resumos`, migração `006`), aulas por espaço com horário semanal, eventos em calendário com modal e feed ICS privado, Perguntar desligado (catálogo mantido).
+
 ## 17. Definition of Done
 
 > `npm run verify` exits 0 on a clean checkout with `supabase start` running and no network access to Ollama or WhatsApp (fakes only); every scenario AC-1 to AC-12 in §13 passes inside that run; `docker compose -f docker/docker-compose.yml config` validates and the runbook's steps are the only thing between a fresh clone on the VPS and a `ready` session; and the only remaining manual steps, listed at the top of `AGENTE-WHATSAPP.md`, are creating the Supabase project, pasting env values into Vercel and `docker/.env`, and reading the pairing code on Daniel's phone.
