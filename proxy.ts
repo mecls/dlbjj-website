@@ -1,5 +1,6 @@
 import { NextResponse, type NextRequest } from "next/server";
 import { ipDe, permitido } from "@/lib/limites";
+import { CABECALHO_KIND, CABECALHO_MOTIVO } from "@/lib/link-invalido";
 import { verificarToken } from "@/lib/tokens-db";
 
 /**
@@ -29,7 +30,11 @@ export async function proxy(req: NextRequest) {
   const destino = new URL("/api/link-invalido", req.url);
   destino.searchParams.set("kind", kind);
   destino.searchParams.set("motivo", avaliacao.motivo);
-  return NextResponse.rewrite(destino);
+  // Também em cabeçalhos: um `next dev` sem `-H` perde a query da reescrita.
+  const headers = new Headers(req.headers);
+  headers.set(CABECALHO_KIND, kind);
+  headers.set(CABECALHO_MOTIVO, avaliacao.motivo);
+  return NextResponse.rewrite(destino, { request: { headers } });
 }
 
 export const config = {

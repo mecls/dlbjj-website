@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { paginaAviso as pagina } from "@/lib/html";
+import { CABECALHO_KIND, CABECALHO_MOTIVO } from "@/lib/link-invalido";
 
 export const runtime = "nodejs";
 
@@ -8,8 +9,8 @@ export const runtime = "nodejs";
  * ou revogado; 404 para o que nunca existiu. Nunca mostra dados de ninguém.
  */
 export function GET(req: NextRequest) {
-  const kind = req.nextUrl.searchParams.get("kind");
-  const motivo = req.nextUrl.searchParams.get("motivo");
+  const kind = req.headers.get(CABECALHO_KIND) ?? req.nextUrl.searchParams.get("kind");
+  const motivo = req.headers.get(CABECALHO_MOTIVO) ?? req.nextUrl.searchParams.get("motivo");
   const headers = { "content-type": "text/html; charset=utf-8", "cache-control": "no-store" };
 
   if (motivo === "desconhecido" || motivo === "tipo") {
