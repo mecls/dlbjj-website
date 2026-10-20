@@ -14,8 +14,15 @@ decision below. The student area (`/aluno/*`) is untouched.
 
 ### 2.1 Início
 - The "Agente de WhatsApp" card is removed from `/painel`. That information lives
-  only on `/painel/agente` (and the bell still lights when the session is not
-  `ligado`).
+  only on `/painel/agente`, which gains the line "Proativas hoje: N de {tecto}".
+- The bell keeps Daniel informed without the card: it lights (and links to
+  `/painel/agente`) when the session row says `instavel`/`caido`, **when its
+  `visto_em` is older than 10 minutes** (a crashed worker leaves `ligado`
+  behind), and, **in production only**, when there is no session row at all
+  (the worker never reported). In dev and in tests a missing row keeps the bell
+  dark. One helper `estadoDaSessao(row, agora)` → `"ligada" | "instavel" |
+  "caida" | "sem_sinal" | "nunca"` in `lib/painel/sessao-estado.ts`, pure,
+  unit-tested, used by the layout and by `/painel/agente`.
 - "Toques pendentes" becomes **"Reativações por enviar"** with the sub-label
   "mensagens automáticas agendadas". Same number (toques `na_fila`).
 
@@ -40,9 +47,12 @@ is a rail on the right.
 - Back link "← Mensagens" stays above the grid.
 
 ### 2.3 Situação — the conversation summary
-- Stored on the lead: migration `006_dlbjj_painel_ajustes.sql` adds
-  `dlbjj_leads.resumo jsonb` with `{ situacao: string, quer: string, mensagens: number,
-  ate: string (created_at of the last message read), em: string (generated at) }`.
+- Stored in its own table (not on the lead: an update there bumps
+  `dlbjj_leads.updated_at`, which reactivation rule R3 reads, so every summary
+  would push a follow-up back 10 days): migration `006_dlbjj_painel_ajustes.sql`
+  creates `dlbjj_resumos (lead_id uuid primary key references dlbjj_leads(id),
+  situacao text, quer text, mensagens int, ate timestamptz, em timestamptz)`,
+  RLS on, upserted on each generation.
 - **Generation**: `POST /api/painel/leads/[phone]/resumo` (session required, 303
   back to the thread). It loads the last 60 messages of the phone (oldest first,
   `role`, `body`, `created_at`), builds a pt-PT prompt and asks the model
@@ -57,9 +67,17 @@ is a rail on the right.
   `quer` below in muted, then "N mensagens · até {diaCurto} · {timeAgo}" and the
   button "Atualizar"; when there are messages newer than `resumo.ate` →
   "Há conversa depois disto." in muted above the button.
-- **Privacy**: the conversation text goes to Ollama Cloud (it already does for
-  the bot's NLU). Add this use to `AGENTE-WHATSAPP.md` §5. Nothing from
-  `dlbjj_alunos` is sent; only the thread.
+- **Privacy** (decided here, Miguel can overrule): the summary is available on
+  every lead, including paused/`humano` ones — those are the threads where it
+  helps most, and the bot's "no LLM while paused" invariant is about the bot
+  answering, not about Daniel asking for a summary. The prompt carries the
+  thread text from both sides, **with login codes and token links redacted**
+  (`*123456*` → `*[código]*`, `/inscricao/<token>` and `/aluno/<token>` →
+  `/…/[link]`) by a pure `redigir(body)` that is unit-tested. Nothing from
+  `dlbjj_alunos` is sent. `AGENTE-WHATSAPP.md` §5 gains a paragraph: on Daniel's
+  request, the text of a conversation (including what was said during a
+  handoff) goes to Ollama Cloud to be summarised; he decides when to press the
+  button, and he must be told this in writing with the rest of §5.
 
 ### 2.4 Aulas — by gym, then a weekly timetable
 - `/painel/aulas` becomes **one card per gym** (`locais` from `content/site.ts`
@@ -152,7 +170,17 @@ Perguntar's e2e, whose feature is gone). Design tokens and primitives from
 - Definition of done: `npm run verify` green and a screenshot of each of the
   five changed pages at 1440px.
 
-## 6. Left to the builder
+## 6. Builder check — calls made (2026-10-20)
+
+1. **What the summary sends to Ollama Cloud**: the whole thread, both
+   directions, codes and token links redacted; available on every lead. See §2.3.
+2. **Worker down without the home card**: the bell lights on a stale heartbeat
+   (10 min) and, in production, on a missing session row; `/painel/agente` shows
+   the proactive count. See §2.1.
+3. **Summary must not count as lead activity**: separate `dlbjj_resumos`
+   table. See §2.3.
+
+## 7. Left to the builder
 Component split, the sheet/dialog implementation (no new dependency; a small
 client component each), the exact prompt wording for the summary, ICS
 details beyond §2.5, the timetable's visual density.
