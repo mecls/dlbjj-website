@@ -4,7 +4,7 @@ import { createHash, randomBytes } from "node:crypto";
  * Tokens dos links públicos (spec §6.10): /inscricao/<token> e /aluno/<token>.
  * Guardamos só o sha256; o token em claro vive apenas na mensagem enviada.
  *  - inscricao: 14 dias, uso único, emitir outro revoga os anteriores da lead;
- *  - perfil: 7 dias, reutilizável até expirar.
+ *  - perfil: 7 dias, uso único (o botão "Entrar" da página do link consome-o).
  */
 export type TokenKind = "inscricao" | "perfil";
 
@@ -38,6 +38,6 @@ export function avaliarToken(row: TokenRow | null, kind: TokenKind, agora: Date 
   if (row.kind !== kind) return { ok: false, motivo: "tipo" };
   if (row.revogado_em) return { ok: false, motivo: "revogado" };
   if (new Date(row.expira_em).getTime() <= agora.getTime()) return { ok: false, motivo: "expirado" };
-  if (kind === "inscricao" && row.usado_em) return { ok: false, motivo: "usado" };
+  if (row.usado_em) return { ok: false, motivo: "usado" };
   return { ok: true };
 }

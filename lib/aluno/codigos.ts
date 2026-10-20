@@ -66,3 +66,14 @@ export async function apagarCodigosDe(phone: string): Promise<void> {
 export async function apagarCodigosAntigos(horas = 24): Promise<void> {
   await serviceClient().from(TABELA).delete().lt("created_at", new Date(Date.now() - horas * 3_600_000).toISOString());
 }
+
+/**
+ * A sessão do WhatsApp está em baixo? `caido`, ou sem sinal de vida há mais de
+ * 10 minutos. Sem linha nenhuma (dev, primeiro arranque) → não bloqueia.
+ */
+export async function sessaoEmBaixo(agora = new Date()): Promise<boolean> {
+  const { data } = await serviceClient().from("dlbjj_sessao").select("estado,visto_em").eq("id", 1).maybeSingle();
+  if (!data) return false;
+  if (data.estado === "caido") return true;
+  return agora.getTime() - new Date(data.visto_em).getTime() > 10 * 60_000;
+}

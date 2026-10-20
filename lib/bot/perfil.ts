@@ -69,9 +69,9 @@ async function enviarLink(lead: Lead, aluno: AlunoPublico): Promise<void> {
     .eq("aluno_id", aluno.id)
     .gte("created_at", inicioDoDia);
   if ((count ?? 0) >= MAX_POR_DIA) {
-    await dizer(lead, "Já te enviei o link hoje — usa o anterior. 🙂");
+    await dizer(lead, `Já te enviei 3 links hoje. Podes entrar em ${APP.baseUrl()}/aluno/entrar com o teu número. 🙂`);
     return;
   }
   const token = await emitirToken("perfil", { alunoId: aluno.id });
-  await dizer(lead, `Aqui tens a tua ficha, ${primeiroNome(aluno.nome)}: ${APP.baseUrl()}/aluno/${token} (válido 7 dias)`);
+  await dizer(lead, `Aqui tens o link para entrares na tua área de aluno, ${primeiroNome(aluno.nome)}: ${APP.baseUrl()}/aluno/${token} (vale 7 dias)`);
 }

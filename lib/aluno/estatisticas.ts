@@ -108,6 +108,11 @@ export function saudacao(instante: Date): "Bom dia" | "Boa tarde" | "Boa noite" 
   return "Boa noite";
 }
 
+/** A saudação deste instante — fora dos componentes, para o render ficar puro. */
+export function saudacaoAgora(): "Bom dia" | "Boa tarde" | "Boa noite" {
+  return saudacao(new Date());
+}
+
 function diasEntre(a: string, b: string): number {
   const [ay, am, ad] = a.split("-").map(Number);
   const [by, bm, bd] = b.split("-").map(Number);

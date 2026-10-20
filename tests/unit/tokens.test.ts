@@ -36,9 +36,9 @@ describe("avaliarToken", () => {
   it("recusa um token de inscrição já usado", () => {
     expect(avaliarToken({ ...base, usado_em: "2026-11-02T00:00:00Z" }, "inscricao", agora)).toEqual({ ok: false, motivo: "usado" });
   });
-  it("um token de perfil pode ser reutilizado até expirar", () => {
+  it("um token de perfil usado deixa de servir (o botão Entrar da área do aluno consome-o)", () => {
     const perfil = { ...base, kind: "perfil" as const, lead_id: null, aluno_id: "a1", usado_em: "2026-11-02T00:00:00Z" };
-    expect(avaliarToken(perfil, "perfil", agora)).toEqual({ ok: true });
+    expect(avaliarToken(perfil, "perfil", agora)).toEqual({ ok: false, motivo: "usado" });
   });
   it("recusa revogado", () => {
     expect(avaliarToken({ ...base, revogado_em: "2026-11-02T00:00:00Z" }, "inscricao", agora)).toEqual({ ok: false, motivo: "revogado" });
@@ -50,3 +50,4 @@ describe("avaliarToken", () => {
     expect(avaliarToken(null, "perfil", agora)).toEqual({ ok: false, motivo: "desconhecido" });
   });
 });
+

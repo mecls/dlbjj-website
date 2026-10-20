@@ -70,6 +70,24 @@ export async function reclamarTokenInscricao(token: string): Promise<TokenRow | 
   return (data as TokenRow | null) ?? null;
 }
 
+/** O mesmo UPDATE atómico para o link da área do aluno: o botão "Entrar" consome-o uma vez só. */
+export async function reclamarTokenPerfil(token: string): Promise<TokenRow | null> {
+  if (!/^[A-Za-z0-9_-]{20,}$/.test(token)) return null;
+  const db = serviceClient();
+  const agora = new Date().toISOString();
+  const { data } = await db
+    .from(TOKENS)
+    .update({ usado_em: agora })
+    .eq("token_hash", hashToken(token))
+    .eq("kind", "perfil")
+    .is("usado_em", null)
+    .is("revogado_em", null)
+    .gt("expira_em", agora)
+    .select("*")
+    .maybeSingle();
+  return (data as TokenRow | null) ?? null;
+}
+
 /** Devolve um token reclamado cujo trabalho falhou, para a pessoa poder tentar outra vez. */
 export async function devolverToken(token: string): Promise<void> {
   await serviceClient().from(TOKENS).update({ usado_em: null }).eq("token_hash", hashToken(token));

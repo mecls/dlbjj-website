@@ -20,7 +20,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ id
     to: aluno.phone,
     role: "bot",
     kind: "sistema",
-    body: `Aqui tens a tua ficha, ${primeiroNome(aluno.nome)}: ${APP.baseUrl()}/aluno/${token} (válido 7 dias)`,
+    body: `Aqui tens o link para entrares na tua área de aluno, ${primeiroNome(aluno.nome)}: ${APP.baseUrl()}/aluno/${token} (vale 7 dias)`,
   });
   return voltar(`/painel/alunos/${id}`, { ok: "1" });
 }

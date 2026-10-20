@@ -12,6 +12,8 @@ import { verificarToken } from "@/lib/tokens-db";
 export async function proxy(req: NextRequest) {
   const m = req.nextUrl.pathname.match(/^\/(aluno|inscricao)\/([^/]+)\/?$/);
   if (!m) return NextResponse.next();
+  // /aluno/entrar, /aluno/historico, … não são tokens: seguem para as páginas.
+  if (m[1] === "aluno" && !/^[A-Za-z0-9_-]{20,}$/.test(m[2])) return NextResponse.next();
 
   if (!(await permitido("publico", ipDe(req.headers), 10, 60))) {
     return new NextResponse("Demasiados pedidos. Tenta daqui a um minuto.", {
