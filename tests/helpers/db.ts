@@ -18,8 +18,21 @@ export function db(): SupabaseClient {
  */
 export function resetDb(): void {
   if (process.env.DLBJJ_SKIP_RESET === "1") return; // para ver um teste falhar contra o esquema atual
-  execSync("supabase db reset --local", { cwd: repoRoot, stdio: "pipe" });
-  execSync("npx tsx scripts/seed-turmas.ts", { cwd: repoRoot, stdio: "pipe" });
+  // O `db reset` reinicia os containers; num Docker apertado (Colima com 2 CPU
+  // e três projetos Supabase) a ligação ao Postgres falha de vez em quando com
+  // "dial tcp … i/o timeout". Três tentativas, com uma pausa entre elas.
+  let ultimo: unknown = null;
+  for (let tentativa = 1; tentativa <= 3; tentativa++) {
+    try {
+      execSync("supabase db reset --local", { cwd: repoRoot, stdio: "pipe" });
+      execSync("npx tsx scripts/seed-turmas.ts", { cwd: repoRoot, stdio: "pipe" });
+      return;
+    } catch (e) {
+      ultimo = e;
+      execSync("sleep 8");
+    }
+  }
+  throw ultimo;
 }
 
 export const FIXTURES = {
