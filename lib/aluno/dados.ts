@@ -91,3 +91,9 @@ export async function numerosAcademia(hoje: string): Promise<NumerosAcademia> {
     presencasRecentes: (recentes ?? []) as PresencaDia[],
   };
 }
+
+/** Há presenças deste aluno antes de `dia`? (para o "Ver mais antigas" do histórico) */
+export async function haPresencasAntesDe(alunoId: string, dia: string): Promise<boolean> {
+  const { count } = await serviceClient().from("dlbjj_presencas").select("*", { count: "exact", head: true }).eq("aluno_id", alunoId).lt("data", dia);
+  return (count ?? 0) > 0;
+}

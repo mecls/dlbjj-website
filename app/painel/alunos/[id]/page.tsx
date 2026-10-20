@@ -130,6 +130,13 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
                 <form method="post" action={`${acao}/perfil-link`}>
                   <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Enviar link do perfil</button>
                 </form>
+                <form method="post" action={`${acao}/ranking`} className="flex items-center gap-2">
+                  <label className="flex items-center gap-2">
+                    <input type="checkbox" name="visivel" value="1" defaultChecked={a.ranking_visivel !== false} />
+                    Aparece no ranking
+                  </label>
+                  <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Guardar</button>
+                </form>
                 {a.estado !== "ativo" && (
                   <form method="post" action={`${acao}/estado`}>
                     <input type="hidden" name="estado" value="ativo" />
