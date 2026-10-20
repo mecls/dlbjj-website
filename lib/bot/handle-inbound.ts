@@ -63,14 +63,15 @@ async function tratar(leadInicial: Lead, msg: InboundMessage, agora: Date): Prom
   const text = (msg.text || "").trim();
   const ligado = await botEnabled();
 
-  // 0. Respondeu a um toque de reativação? Fica registado; as proativas pendentes caem.
-  await registarResposta(lead.id, lead.phone);
-
   // 1. Opt-out: determinista, antes de tudo, e fica gravado mesmo com o bot desligado.
+  //    (Antes de registarResposta: a proativa pendente tem de ficar cancelada com o motivo "opt-out".)
   if (isOptOut(text, lead.step)) {
     await registarOptOut(lead, text, ligado);
     return;
   }
+
+  // 1b. Respondeu a um toque de reativação? Fica registado; as proativas pendentes caem.
+  await registarResposta(lead.id, lead.phone);
 
   // 2. Interruptor desligado: nada sai. Um check-in inequívoco ainda fica registado.
   if (!ligado) {
