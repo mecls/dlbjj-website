@@ -35,8 +35,8 @@ export default async function LeadPage({
   if (!lead) {
     return (
       <div className="space-y-4">
-        <Link href="/painel" className="text-sm text-neutral-500 hover:underline">
-          ← Inscrições
+        <Link href="/painel/mensagens" className="text-sm text-neutral-500 hover:underline">
+          ← Mensagens
         </Link>
         <Card className="p-8 text-center text-sm text-neutral-400">
           Lead não encontrada ({phone}).
@@ -49,8 +49,8 @@ export default async function LeadPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/painel" className="text-sm text-neutral-500 hover:underline">
-        ← Inscrições
+      <Link href="/painel/mensagens" className="text-sm text-neutral-500 hover:underline">
+        ← Mensagens
       </Link>
 
       <div className="grid gap-4 md:grid-cols-[1fr_1.2fr]">

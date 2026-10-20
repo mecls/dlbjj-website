@@ -1,121 +1,90 @@
 import Link from "next/link";
+import { localPorSlug } from "@/content/site";
+import { Icone } from "@/components/app/icones";
+import { StatCard } from "@/components/app/stat-card";
+import { BotaoLink, Card, PageHeader, SectionTitle } from "@/components/app/ui";
+import { timeAgo } from "@/components/painel/ui";
 import { requireAuth } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/config";
-import { serviceClient } from "@/lib/supabase/service";
-import { Card, StatusBadge, timeAgo } from "@/components/painel/ui";
-import { MODALIDADE_LABEL } from "@/lib/bot/flow";
-import { STATUS_LABEL, STEP_LABEL, type Lead, type LeadStatus } from "@/lib/bot/types";
-import { localPorSlug } from "@/content/site";
-
-const ESTADOS: LeadStatus[] = ["novo", "em_progresso", "concluido", "inscrito", "humano", "perdido", "descartado"];
+import { mapaDeCalor, saudacaoAgora } from "@/lib/aluno/estatisticas";
+import { numerosDoPainel } from "@/lib/painel/dashboard";
+import { hojeLisboa } from "@/lib/tempo";
 
 export const dynamic = "force-dynamic";
 
-export default async function PainelPage({ searchParams }: { searchParams?: Promise<{ estado?: string; q?: string }> }) {
-  await requireAuth();
-  const sp = (await searchParams) ?? {};
-  const estado = ESTADOS.includes(sp.estado as LeadStatus) ? (sp.estado as LeadStatus) : "";
-  const q = (sp.q ?? "").trim().slice(0, 60);
+function descreverSessao(s: { estado: string; detalhe: string | null; visto_em: string } | null): string {
+  if (!s) return "Sessão — o worker ainda não reportou";
+  const vista = `visto há ${timeAgo(s.visto_em).replace(/^há /, "")}`;
+  if (s.estado === "caido") return `Sessão em baixo · ${vista}`;
+  if (s.estado === "instavel") return `Sessão instável · ${vista}`;
+  return `Sessão ligada · ${vista}`;
+}
 
+/** Início do painel (design §6): o agente, os números da academia e o que está à espera do Daniel. */
+export default async function PainelInicio() {
+  await requireAuth();
   if (!supabaseConfigured()) {
     return (
       <Card className="p-6">
         <h1 className="text-lg font-semibold">Falta configurar o Supabase</h1>
-        <p className="mt-2 text-sm text-neutral-500">
-          Define <code>NEXT_PUBLIC_SUPABASE_URL</code> e{" "}
-          <code>SUPABASE_SERVICE_ROLE_KEY</code> em <code>.env.local</code> e
-          aplica a migração <code>supabase/migrations/001_dlbjj_onboarding.sql</code>.
+        <p className="mt-2 text-sm text-app-muted">
+          Define <code>NEXT_PUBLIC_SUPABASE_URL</code> e <code>SUPABASE_SERVICE_ROLE_KEY</code> em <code>.env.local</code> e aplica as migrações em <code>supabase/migrations/</code>.
         </p>
       </Card>
     );
   }
-
-  const db = serviceClient();
-  let consulta = db.from("dlbjj_leads").select("*").order("last_message_at", { ascending: false }).limit(200);
-  if (estado) consulta = consulta.eq("status", estado);
-  if (q) {
-    const termo = q.replace(/[%_,()*]/g, "");
-    consulta = consulta.or(`name.ilike.%${termo}%,phone.ilike.%${termo.replace(/\D/g, "") || termo}%`);
-  }
-  const { data, error } = await consulta;
-  const leads = (data ?? []) as Lead[];
+  const hoje = hojeLisboa();
+  const n = await numerosDoPainel(hoje);
+  const mapa = mapaDeCalor(n.presencasRecentes, hoje, 12);
+  const top = n.turmaTop;
 
   return (
-    <div className="space-y-4">
-      <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Inscrições</h1>
-        <span className="text-sm text-neutral-500">{leads.length} leads</span>
+    <div className="space-y-8">
+      <PageHeader titulo={`${saudacaoAgora()}, Daniel 👋`}>
+        <BotaoLink href="/painel/aulas" variant="outline">
+          <Icone nome="calendario" className="size-4" />
+          Aulas de hoje
+        </BotaoLink>
+      </PageHeader>
+
+      <Link href="/painel/agente" className="block">
+        <Card className="p-7 transition hover:border-app-icon/40">
+          <div className="flex items-center gap-3">
+            <Icone nome="agente" className="size-7 text-app-icon" />
+            <p className="text-xl font-bold">Agente de WhatsApp</p>
+          </div>
+          <div className="mt-5 space-y-1.5 text-[15px] text-app-muted">
+            <p>{descreverSessao(n.sessao)}</p>
+            <p>{`Interruptor ${n.botLigado ? "ligado" : "desligado"}`}</p>
+            <p>{`${n.conversasAEspera} ${n.conversasAEspera === 1 ? "conversa à espera" : "conversas à espera"}`}</p>
+            <p>{`Proativas hoje: ${n.proativasHoje} de ${n.tecto}`}</p>
+          </div>
+        </Card>
+      </Link>
+
+      <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
+        <StatCard icone="alunos" valor={n.alunosAtivos} rotulo="Alunos ativos" href="/painel/alunos" mapa={mapa} />
+        <StatCard icone="presencas" valor={n.presencasMes} rotulo="Presenças este mês" href="/painel/aulas" mapa={mapa} />
+        <StatCard icone="inscricoes" valor={n.inscricoesMes} rotulo="Inscrições este mês" href="/painel/alunos" mapa={mapa} />
+        <StatCard icone="mensagens" valor={n.conversasAEspera} rotulo="Conversas à espera" href="/painel/mensagens" mapa={mapa} />
       </div>
 
-      <form method="get" className="flex flex-wrap items-end gap-2 text-sm">
-        <label className="grid gap-1">
-          <span className="text-xs text-neutral-500">Estado</span>
-          <select name="estado" defaultValue={estado} className="rounded-lg border border-neutral-300 px-2 py-1.5">
-            <option value="">Todos</option>
-            {ESTADOS.map((e) => (
-              <option key={e} value={e}>
-                {STATUS_LABEL[e]}
-              </option>
-            ))}
-          </select>
-        </label>
-        <label className="grid gap-1">
-          <span className="text-xs text-neutral-500">Nome ou telefone</span>
-          <input name="q" defaultValue={q} placeholder="Procurar" className="rounded-lg border border-neutral-300 px-2 py-1.5" />
-        </label>
-        <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 hover:bg-neutral-50">Filtrar</button>
-      </form>
-
-      {error && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Não foi possível ler as leads: {error.message}</p>}
-
-      {leads.length === 0 ? (
-        <Card className="p-8 text-center text-sm text-neutral-400">
-          {estado || q ? "Nenhuma lead com esse filtro." : "Ainda não há leads. Quando alguém escrever no WhatsApp, aparece aqui."}
-        </Card>
-      ) : (
-        <div className="space-y-2">
-          {leads.map((l) => (
-            <Link key={l.id} href={`/painel/${l.phone}`} className="block">
-              <Card className="flex items-center gap-3 p-4 transition hover:border-neutral-300 hover:shadow">
-                <div className="min-w-0 flex-1">
-                  <div className="flex items-center gap-2">
-                    <span className="truncate font-medium text-neutral-900">
-                      {l.name || "Sem nome"}
-                    </span>
-                    <StatusBadge status={l.status} />
-                    {l.paused && (
-                      <span className="rounded bg-amber-100 px-1.5 py-0.5 text-[10px] font-medium text-amber-800">
-                        bot em pausa
-                      </span>
-                    )}
-                    {l.human_reason?.startsWith("Daniel respondeu") && (
-                      <span className="rounded bg-sky-100 px-1.5 py-0.5 text-[10px] font-medium text-sky-800">
-                        telemóvel
-                      </span>
-                    )}
-                  </div>
-                  <p className="mt-0.5 truncate text-xs text-neutral-500">
-                    {l.phone} · {resumo(l)}
-                  </p>
-                </div>
-                <span className="shrink-0 text-xs text-neutral-400">
-                  {timeAgo(l.last_message_at)}
-                </span>
-              </Card>
-            </Link>
-          ))}
+      <section className="space-y-4">
+        <SectionTitle emoji="🏛">A minha academia</SectionTitle>
+        <div className="grid gap-4 md:grid-cols-2">
+          <StatCard icone="calendario" valor={n.aulasSemana} rotulo="Aulas esta semana" href="/painel/aulas" mapa={mapa} />
+          <StatCard
+            icone="turma"
+            valor={top ? `${top.turma} · ${top.horario.slice(0, 5)}` : "—"}
+            rotulo="Turma mais concorrida (30 dias)"
+            sub={top ? `${top.dias} · ${localPorSlug(top.local_slug)?.nome ?? top.local_slug}` : undefined}
+            href="/painel/aulas"
+            mapa={mapa}
+          />
+          <StatCard icone="reativacao" valor={n.alunosInativos} rotulo="Alunos inativos" href="/painel/reativacao" mapa={mapa} />
+          <StatCard icone="eventos" valor={n.toquesPendentes} rotulo="Toques pendentes" href="/painel/reativacao" mapa={mapa} />
         </div>
-      )}
+      </section>
     </div>
   );
-}
-
-/** Resumo de uma linha: passo atual + o que já foi recolhido. */
-function resumo(l: Lead): string {
-  const partes: string[] = [];
-  if (l.status !== "concluido") partes.push(STEP_LABEL[l.step]);
-  if (l.modalidade) partes.push(MODALIDADE_LABEL[l.modalidade]);
-  if (l.local_slug) partes.push(localPorSlug(l.local_slug)?.nome ?? l.local_slug);
-  if (l.horario) partes.push(l.horario);
-  return partes.join(" · ") || "novo contacto";
 }

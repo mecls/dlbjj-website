@@ -24,7 +24,8 @@ async function leadByPhone(phone: string): Promise<Lead | null> {
 }
 
 function refresh(phone: string) {
-  revalidatePath(`/painel/${phone}`);
+  revalidatePath(`/painel/mensagens/${phone}`);
+  revalidatePath("/painel/mensagens");
   revalidatePath("/painel");
 }
 

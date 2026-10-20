@@ -9,7 +9,7 @@ export async function POST(_req: NextRequest, { params }: { params: Promise<{ ph
   const bloqueio = await sessaoOu401();
   if (bloqueio) return bloqueio;
   const { phone } = await params;
-  if (!/^\d{8,15}$/.test(phone)) return voltar("/painel");
+  if (!/^\d{8,15}$/.test(phone)) return voltar("/painel/mensagens");
   await serviceClient().from("dlbjj_leads").update({ status: "perdido" }).eq("phone", phone).not("status", "in", "(inscrito)");
-  return voltar(`/painel/${phone}`);
+  return voltar(`/painel/mensagens/${phone}`);
 }

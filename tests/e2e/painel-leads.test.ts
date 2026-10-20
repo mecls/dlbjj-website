@@ -10,20 +10,20 @@ beforeAll(() => {
 
 describe("Painel — inscrições (lista) — spec §4", () => {
   it("filtra por estado e procura por nome ou telefone", async () => {
-    let html = await (await getPainel("/painel?estado=concluido")).text();
+    let html = await (await getPainel("/painel/mensagens?estado=concluido")).text();
     expect(html).toContain("Carla Teste");
     expect(html).not.toContain("Bruno Teste");
-    html = await (await getPainel("/painel?q=bruno")).text();
+    html = await (await getPainel("/painel/mensagens?q=bruno")).text();
     expect(html).toContain("Bruno Teste");
     expect(html).not.toContain("Carla Teste");
-    html = await (await getPainel(`/painel?q=${FIXTURES.leads.novo.phone.slice(-6)}`)).text();
+    html = await (await getPainel(`/painel/mensagens?q=${FIXTURES.leads.novo.phone.slice(-6)}`)).text();
     expect(html).toContain("Lead Novo");
     expect(html).not.toContain("Bruno Teste");
   });
 
   it("mostra o chip 'telemóvel' quando o Daniel respondeu pelo telemóvel", async () => {
     await sb.from("dlbjj_leads").update({ paused: true, status: "humano", human_reason: "Daniel respondeu pelo telemóvel" }).eq("id", FIXTURES.leads.emProgresso.id);
-    const html = await (await getPainel("/painel")).text();
+    const html = await (await getPainel("/painel/mensagens")).text();
     const linha = html.split("</a>").find((x) => x.includes("Bruno Teste"))!;
     expect(linha).toContain("telemóvel");
     expect(linha).toContain("bot em pausa");
@@ -38,7 +38,7 @@ describe("Painel — lead — spec §4", () => {
       { phone, direction: "out", role: "bot", body: "Enviada", estado: "enviada" },
       { phone, direction: "out", role: "humano", body: "Falhou", estado: "falhou" },
     ]);
-    const html = await (await getPainel(`/painel/${phone}`)).text();
+    const html = await (await getPainel(`/painel/mensagens/${phone}`)).text();
     const bolha = (texto: string) => html.split("max-w-[80%]").find((x) => x.includes(`>${texto}<`))!;
     expect(bolha("Na fila")).toContain("na fila");
     expect(bolha("Enviada")).toContain(">enviada<");
@@ -51,7 +51,7 @@ describe("Painel — lead — spec §4", () => {
     expect(r.status).toBe(303);
     const { data } = await sb.from("dlbjj_leads").select("status").eq("id", id).single();
     expect(data!.status).toBe("perdido");
-    const html = await (await getPainel(`/painel/${phone}`)).text();
+    const html = await (await getPainel(`/painel/mensagens/${phone}`)).text();
     expect(html).toContain("Perdido");
   });
 });
