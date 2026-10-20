@@ -3,7 +3,8 @@ import { AppShell, type NavItem, type NavSection } from "@/components/app/shell"
 import { RealtimeRefresher } from "@/components/painel/realtime-refresher";
 import { logoutAction } from "@/app/painel/actions";
 import { isAuthed } from "@/lib/auth";
-import { supabaseConfigured } from "@/lib/config";
+import { isProduction, supabaseConfigured } from "@/lib/config";
+import { estadoDaSessao } from "@/lib/painel/sessao-estado";
 import { conversasAEspera } from "@/lib/painel/mensagens";
 import { serviceClient } from "@/lib/supabase/service";
 
@@ -39,8 +40,8 @@ const RODAPE: NavItem[] = [{ href: "/", label: "Site", icone: "site" }];
 async function sinais(): Promise<{ espera: number; sessaoMal: boolean }> {
   if (!supabaseConfigured()) return { espera: 0, sessaoMal: false };
   try {
-    const [espera, { data: sessao }] = await Promise.all([conversasAEspera(), serviceClient().from("dlbjj_sessao").select("estado").eq("id", 1).maybeSingle()]);
-    return { espera: espera.total, sessaoMal: Boolean(sessao && sessao.estado !== "ligado") };
+    const [espera, { data: sessao }] = await Promise.all([conversasAEspera(), serviceClient().from("dlbjj_sessao").select("estado,visto_em").eq("id", 1).maybeSingle()]);
+    return { espera: espera.total, sessaoMal: estadoDaSessao(sessao, new Date(), isProduction()).alerta };
   } catch {
     return { espera: 0, sessaoMal: false };
   }

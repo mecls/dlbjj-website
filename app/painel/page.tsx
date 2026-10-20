@@ -1,9 +1,7 @@
-import Link from "next/link";
 import { localPorSlug } from "@/content/site";
 import { Icone } from "@/components/app/icones";
 import { StatCard } from "@/components/app/stat-card";
 import { BotaoLink, Card, PageHeader, SectionTitle } from "@/components/app/ui";
-import { timeAgo } from "@/components/painel/ui";
 import { requireAuth } from "@/lib/auth";
 import { supabaseConfigured } from "@/lib/config";
 import { mapaDeCalor, saudacaoAgora } from "@/lib/aluno/estatisticas";
@@ -12,15 +10,7 @@ import { hojeLisboa } from "@/lib/tempo";
 
 export const dynamic = "force-dynamic";
 
-function descreverSessao(s: { estado: string; detalhe: string | null; visto_em: string } | null): string {
-  if (!s) return "Sessão — o worker ainda não reportou";
-  const vista = `visto há ${timeAgo(s.visto_em).replace(/^há /, "")}`;
-  if (s.estado === "caido") return `Sessão em baixo · ${vista}`;
-  if (s.estado === "instavel") return `Sessão instável · ${vista}`;
-  return `Sessão ligada · ${vista}`;
-}
-
-/** Início do painel (design §6): o agente, os números da academia e o que está à espera do Daniel. */
+/** Início do painel (design §6; ajustes §2.1): os números da academia e o que está à espera do Daniel. O agente vive em /painel/agente. */
 export default async function PainelInicio() {
   await requireAuth();
   if (!supabaseConfigured()) {
@@ -47,21 +37,6 @@ export default async function PainelInicio() {
         </BotaoLink>
       </PageHeader>
 
-      <Link href="/painel/agente" className="block">
-        <Card className="p-7 transition hover:border-app-icon/40">
-          <div className="flex items-center gap-3">
-            <Icone nome="agente" className="size-7 text-app-icon" />
-            <p className="text-xl font-bold">Agente de WhatsApp</p>
-          </div>
-          <div className="mt-5 space-y-1.5 text-[15px] text-app-muted">
-            <p>{descreverSessao(n.sessao)}</p>
-            <p>{`Interruptor ${n.botLigado ? "ligado" : "desligado"}`}</p>
-            <p>{`${n.conversasAEspera} ${n.conversasAEspera === 1 ? "conversa à espera" : "conversas à espera"}`}</p>
-            <p>{`Proativas hoje: ${n.proativasHoje} de ${n.tecto}`}</p>
-          </div>
-        </Card>
-      </Link>
-
       <div className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
         <StatCard icone="alunos" valor={n.alunosAtivos} rotulo="Alunos ativos" href="/painel/alunos" mapa={mapa} />
         <StatCard icone="presencas" valor={n.presencasMes} rotulo="Presenças este mês" href="/painel/aulas" mapa={mapa} />
@@ -82,7 +57,7 @@ export default async function PainelInicio() {
             mapa={mapa}
           />
           <StatCard icone="reativacao" valor={n.alunosInativos} rotulo="Alunos inativos" href="/painel/reativacao" mapa={mapa} />
-          <StatCard icone="eventos" valor={n.toquesPendentes} rotulo="Toques pendentes" href="/painel/reativacao" mapa={mapa} />
+          <StatCard icone="reativacao" valor={n.toquesPendentes} rotulo="Reativações por enviar" sub="mensagens automáticas agendadas" href="/painel/reativacao" mapa={mapa} />
         </div>
       </section>
     </div>

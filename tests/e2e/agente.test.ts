@@ -16,6 +16,7 @@ describe("Painel — agente", () => {
     const html = await r.text();
     expect(html).toContain("O worker ainda não reportou");
     expect(html).toContain("Ligado");
+    expect(html).toContain("Proativas hoje: 0 de 10");
   });
 
   it("desligar o bot: nada sai, mas a mensagem recebida fica registada (AC-10, metade da app)", async () => {
@@ -81,5 +82,14 @@ describe("Login", () => {
     expect(r.headers.get("location")).toContain("erro=limite");
     const html = await (await fetch(`${E2E_URL}/painel/login?erro=limite`)).text();
     expect(html).toContain("Demasiadas tentativas. Tenta daqui a 15 minutos.");
+  });
+});
+
+describe("Painel — agente: batimento parado", () => {
+  it("uma sessão 'ligado' sem sinal há 20 minutos aparece como sem sinal", async () => {
+    await sb.from("dlbjj_sessao").upsert({ id: 1, estado: "ligado", visto_em: new Date(Date.now() - 20 * 60_000).toISOString() }, { onConflict: "id" });
+    const html = await (await getPainel("/painel/agente")).text();
+    expect(html).toContain("Sessão sem sinal");
+    await sb.from("dlbjj_sessao").delete().eq("id", 1);
   });
 });

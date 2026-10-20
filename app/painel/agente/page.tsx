@@ -3,8 +3,15 @@ import { serviceClient } from "@/lib/supabase/service";
 import { hojeLisboa } from "@/lib/tempo";
 import { Card } from "@/components/painel/ui";
 import { timeAgo } from "@/components/painel/ui";
+import { isProduction } from "@/lib/config";
+import { estadoDaSessao, type EstadoSessao } from "@/lib/painel/sessao-estado";
 
 export const dynamic = "force-dynamic";
+
+/** O estado do worker neste instante. Fora do componente: o render fica puro. */
+function avaliarSessao(sessao: { estado: string; visto_em: string } | null): EstadoSessao {
+  return estadoDaSessao(sessao, new Date(), isProduction()).estado;
+}
 
 /** A restrição do WhatsApp ainda em curso (ou null). Fora do componente: o render fica puro. */
 function restricaoEmCurso(ate: string | null | undefined): Date | null {
@@ -17,13 +24,15 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
   await requireAuth();
   const { ok } = (await searchParams) ?? {};
   const db = serviceClient();
-  const [{ data: ligado }, { data: sessao }, { data: orc }, { data: desconhecidos }, { data: falhadas }] = await Promise.all([
+  const [{ data: ligado }, { data: sessao }, { data: orc }, { data: desconhecidos }, { data: falhadas }, { data: tecto }] = await Promise.all([
     db.from("dlbjj_settings").select("value").eq("key", "bot_enabled").maybeSingle(),
     db.from("dlbjj_sessao").select("*").eq("id", 1).maybeSingle(),
     db.from("dlbjj_orcamento_envio").select("proativas,respostas,recebidas").eq("dia", hojeLisboa()).maybeSingle(),
     db.from("dlbjj_fila_saida").select("id,phone,kind,corpo,erro,updated_at").eq("estado", "desconhecido").order("updated_at", { ascending: false }).limit(20),
     db.from("dlbjj_entradas_falhadas").select("id,delivery_id,payload,tentativas,erro,created_at").is("resolvida_em", null).gt("tentativas", 3).order("created_at", { ascending: false }).limit(20),
+    db.from("dlbjj_settings").select("value").eq("key", "proativas_por_dia").maybeSingle(),
   ]);
+  const estadoWorker = avaliarSessao(sessao);
   const botLigado = ligado?.value !== "off";
   const restricao = restricaoEmCurso(sessao?.restricao_ate);
 
@@ -38,6 +47,7 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
           <p className="text-sm text-app-muted">
             {botLigado ? "Ligado — o bot responde e faz os toques de reativação." : "Desligado — nada sai; o que estava em fila é cancelado. As mensagens do Daniel pelo painel continuam a sair."}
           </p>
+          <p className="mt-1 text-sm text-app-muted">{`Proativas hoje: ${orc?.proativas ?? 0} de ${Number(tecto?.value ?? 10) || 10}`}</p>
         </div>
         <form method="post" action="/api/painel/agente/interruptor">
           <input type="hidden" name="estado" value={botLigado ? "off" : "on"} />
@@ -49,6 +59,11 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
 
       {!sessao ? (
         <Card className="p-5 text-sm text-app-muted">O worker ainda não reportou. Segue o runbook em docker/README.md.</Card>
+      ) : estadoWorker === "sem_sinal" ? (
+        <Card className="border-amber-200 bg-amber-50 p-5 text-sm text-amber-900">
+          <h2 className="font-semibold">Sessão sem sinal há {timeAgo(sessao.visto_em).replace(/^há /, "")}</h2>
+          <p className="mt-1">O worker pode ter parado: a sessão dizia «ligado» mas deixou de reportar. Runbook: docker/README.md, passo 5.</p>
+        </Card>
       ) : sessao.estado === "caido" ? (
         <Card className="border-red-200 bg-red-50 p-5 text-sm text-red-800">
           <h2 className="font-semibold">Sessão WhatsApp em baixo{sessao.detalhe ? `: ${sessao.detalhe}` : ""}</h2>
