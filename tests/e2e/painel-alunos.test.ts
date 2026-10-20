@@ -130,12 +130,26 @@ describe("Painel — alunos", () => {
 });
 
 describe("Painel — aulas", () => {
-  it("a lista de aulas é um ranking e assinala a aula com mais alunos", async () => {
+  it("a página das aulas lista os espaços e assinala a turma mais concorrida", async () => {
     const html = await (await getPainel("/painel/aulas")).text();
-    expect(html).toContain("a aula com mais alunos");
-    const linha = html.split("<tr").find((tr) => tr.includes("a aula com mais alunos"))!;
-    expect(linha).toContain("BJJ Kids");
-    expect(linha).toContain("18:30");
+    for (const s of ["Queluz", "São Brás", "BJJ Kids", "a aula com mais alunos", 'href="/painel/aulas/espaco/sao-bras?dias=30"']) expect(html, s).toContain(s);
+    expect(html).toContain("Kids · BJJ Kids");
+  });
+
+  it("o horário semanal de São Brás tem a aula das 19:30 à segunda e à quarta, e liga à turma", async () => {
+    const html = await (await getPainel("/painel/aulas/espaco/sao-bras")).text();
+    expect(html).toContain("segunda");
+    expect(html).toContain("quarta");
+    expect(html).toContain("19:30");
+    const t = await turmaId("sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30");
+    expect(html).toContain(`href="/painel/aulas/${t}`);
+    expect((await getPainel("/painel/aulas/espaco/nao-existe")).status).toBe(404);
+  });
+
+  it("um espaço sem turmas ativas diz-o", async () => {
+    await sb.from("dlbjj_turmas").update({ ativa: false }).eq("local_slug", "queluz");
+    expect(await (await getPainel("/painel/aulas/espaco/queluz")).text()).toContain("Sem turmas ativas neste espaço.");
+    await sb.from("dlbjj_turmas").update({ ativa: true }).eq("local_slug", "queluz");
   });
 
   it("marcar presenças de uma aula para um dia, ignorando as repetidas", async () => {

@@ -19,8 +19,8 @@ export default async function AulaPage({ params, searchParams }: { params: Promi
 
   return (
     <div className="space-y-4">
-      <Link href="/painel/aulas" className="text-sm text-app-muted hover:underline">
-        ← Aulas
+      <Link href={`/painel/aulas/espaco/${turma.local_slug}`} className="text-sm text-app-muted hover:underline">
+        ← {localPorSlug(turma.local_slug)?.nome ?? "Aulas"}
       </Link>
       <h1 className="text-[28px] font-bold tracking-tight text-app-text">
         {turma.turma} · {localPorSlug(turma.local_slug)?.nome} · {turma.dias} {turma.horario.slice(0, 5)}
