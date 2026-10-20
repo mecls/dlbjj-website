@@ -84,8 +84,10 @@ inscrição**; o crachá e o sino acendem quando alguém espera por ele) · Alun
 (ficha, graduações, presenças, anonimizar, novo aluno, "Aparece no ranking") ·
 Aulas (ranking e lista de presenças por dia) · Eventos (seminários,
 graduações…; os alunos veem-nos no calendário) · Reativação (em atraso, Saltar,
-Enviar agora, toques, opt-outs) · Perguntar (só com os dados; nunca inventa) ·
-Agente (interruptor, sessão, envios desconhecidos, entradas por processar).
+Enviar agora, toques, opt-outs) · Agente (interruptor, sessão, envios
+desconhecidos, entradas por processar). O «Perguntar» (chat só com os dados)
+está desligado por agora; o catálogo de ferramentas em `lib/perguntar/` fica
+para quando voltar.
 
 ### O que corre sozinho
 
@@ -199,7 +201,7 @@ components/app/*                     ← a moldura partilhada (barra lateral, ca
 lib/bot/outbound.ts                  ← a ÚNICA porta de saída (fila)
 lib/inscricao/*                      ← formulário, validação, criação do aluno
 lib/reativacao/*                     ← regras R1–R5, execução, resposta
-lib/perguntar/*                      ← catálogo, ferramentas, modelo, resposta
+lib/perguntar/*                      ← catálogo, ferramentas, modelo, resposta (página desligada por agora)
 lib/anonimizar.ts · limites.ts · tokens*.ts · tempo.ts
 proxy.ts                             ← tokens e limite nas páginas públicas
 app/painel/*  app/api/painel/*       ← painel e as suas ações (POST + 303)

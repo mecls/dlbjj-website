@@ -27,10 +27,7 @@ const NAV: NavSection[] = [
   },
   {
     caption: "Ferramentas",
-    items: [
-      { href: "/painel/perguntar", label: "Perguntar", icone: "perguntar" },
-      { href: "/painel/agente", label: "Agente", icone: "agente" },
-    ],
+    items: [{ href: "/painel/agente", label: "Agente", icone: "agente" }],
   },
 ];
 
