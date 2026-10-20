@@ -35,10 +35,10 @@ export default async function LeadPage({
   if (!lead) {
     return (
       <div className="space-y-4">
-        <Link href="/painel/mensagens" className="text-sm text-neutral-500 hover:underline">
+        <Link href="/painel/mensagens" className="text-sm text-app-muted hover:underline">
           ← Mensagens
         </Link>
-        <Card className="p-8 text-center text-sm text-neutral-400">
+        <Card className="p-8 text-center text-sm text-app-muted">
           Lead não encontrada ({phone}).
         </Card>
       </div>
@@ -49,7 +49,7 @@ export default async function LeadPage({
 
   return (
     <div className="space-y-4">
-      <Link href="/painel/mensagens" className="text-sm text-neutral-500 hover:underline">
+      <Link href="/painel/mensagens" className="text-sm text-app-muted hover:underline">
         ← Mensagens
       </Link>
 
@@ -57,12 +57,12 @@ export default async function LeadPage({
         {/* Ficha de cliente */}
         <Card className="h-fit p-5">
           <div className="flex items-center gap-2">
-            <h1 className="text-lg font-semibold text-neutral-900">
+            <h1 className="text-lg font-semibold text-app-text">
               {lead.name || "Sem nome"}
             </h1>
             <StatusBadge status={lead.status} />
           </div>
-          <p className="mt-0.5 text-sm text-neutral-500">{lead.phone}</p>
+          <p className="mt-0.5 text-sm text-app-muted">{lead.phone}</p>
 
           <dl className="mt-4 space-y-2 text-sm">
             <Linha rotulo="Passo" valor={STEP_LABEL[lead.step]} />
@@ -114,14 +114,14 @@ export default async function LeadPage({
             </p>
           )}
 
-          <div className="mt-5 border-t border-neutral-100 pt-4">
+          <div className="mt-5 border-t border-app-border pt-4">
             <LeadActions phone={lead.phone} paused={lead.paused} />
           </div>
         </Card>
 
         {/* Conversa */}
         <Card className="flex min-h-[28rem] flex-col overflow-hidden">
-          <div className="border-b border-neutral-100 px-4 py-2 text-sm font-semibold">
+          <div className="border-b border-app-border px-4 py-2 text-sm font-semibold">
             Conversa
             {lead.paused && (
               <span className="ml-2 text-xs font-normal text-amber-700">
@@ -140,8 +140,8 @@ export default async function LeadPage({
 function Linha({ rotulo, valor }: { rotulo: string; valor: string }) {
   return (
     <div className="flex gap-2">
-      <dt className="w-32 shrink-0 text-neutral-400">{rotulo}</dt>
-      <dd className="text-neutral-800">{valor}</dd>
+      <dt className="w-32 shrink-0 text-app-muted">{rotulo}</dt>
+      <dd className="text-app-text">{valor}</dd>
     </div>
   );
 }

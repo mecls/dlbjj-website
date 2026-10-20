@@ -3,6 +3,7 @@ import { notFound } from "next/navigation";
 import { serviceClient } from "@/lib/supabase/service";
 import { turmasAtivas } from "@/lib/alunos/consultas";
 import { ESTILO_FORMULARIO, formularioHtml } from "@/lib/inscricao/formulario";
+import { Logotipo } from "@/components/app/logotipo";
 import { verificarToken } from "@/lib/tokens-db";
 
 export const dynamic = "force-dynamic";
@@ -35,12 +36,14 @@ export default async function PaginaInscricao({ params }: { params: Promise<{ to
   };
 
   return (
-    <main className="mx-auto max-w-xl px-4 py-10 text-neutral-900">
-      <style>{ESTILO_FORMULARIO}</style>
-      <p className="text-xs font-bold tracking-widest text-dl-red">DL-BJJ</p>
-      <h1 className="mt-1 text-2xl font-semibold">Inscrição</h1>
-      <p className="mb-6 text-sm text-neutral-500">Demora 2 minutos. Os dados ficam só com a academia.</p>
-      <div dangerouslySetInnerHTML={{ __html: formularioHtml({ action: `/api/inscricao/${encodeURIComponent(token)}`, valores, erros: {}, turmas }) }} />
-    </main>
+    <div className="min-h-screen bg-app-page text-app-text [color-scheme:light]">
+      <main className="mx-auto max-w-xl px-4 py-10">
+        <style>{ESTILO_FORMULARIO}</style>
+        <Logotipo className="mb-6 h-20" />
+        <h1 className="text-[28px] font-bold tracking-tight">Inscrição</h1>
+        <p className="mb-6 text-sm text-app-muted">Demora 2 minutos. Os dados ficam só com a academia.</p>
+        <div dangerouslySetInnerHTML={{ __html: formularioHtml({ action: `/api/inscricao/${encodeURIComponent(token)}`, valores, erros: {}, turmas }) }} />
+      </main>
+    </div>
   );
 }

@@ -17,9 +17,9 @@ export function ThreadBody({ messages }: { messages: LeadMessage[] }) {
   }, [messages.length]);
 
   return (
-    <div className="flex-1 space-y-2 overflow-y-auto bg-neutral-50 p-3">
+    <div className="flex-1 space-y-2 overflow-y-auto bg-app-page p-3">
       {messages.length === 0 && (
-        <p className="py-8 text-center text-xs text-neutral-400">
+        <p className="py-8 text-center text-xs text-app-muted">
           Sem mensagens ainda.
         </p>
       )}
@@ -37,12 +37,12 @@ function ChatBubble({ m }: { m: LeadMessage }) {
     <div className={cn("flex", out ? "justify-end" : "justify-start")}>
       <div
         className={cn(
-          "max-w-[80%] rounded-2xl px-3 py-2 text-sm shadow-sm",
+          "max-w-[80%] rounded-2xl px-3 py-2 text-sm",
           out
             ? m.role === "humano"
-              ? "bg-amber-100 text-neutral-900"
-              : "bg-red-100 text-neutral-900"
-            : "bg-white text-neutral-800",
+              ? "bg-amber-100 text-app-text"
+              : "bg-red-100 text-app-text"
+            : "bg-white text-app-text",
         )}
       >
         {m.media_url && (
@@ -54,10 +54,10 @@ function ChatBubble({ m }: { m: LeadMessage }) {
           />
         )}
         <p className="whitespace-pre-wrap">{m.body}</p>
-        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-neutral-400">
+        <div className="mt-1 flex items-center justify-end gap-2 text-[10px] text-app-muted">
           <span className="capitalize">{roleLabel(m.role)}</span>
           {out && m.estado && (
-            <span className={cn("rounded px-1", m.estado === "falhou" || m.estado === "desconhecido" ? "bg-red-100 text-red-700" : m.estado === "na_fila" ? "bg-neutral-200 text-neutral-600" : "text-neutral-400")}>
+            <span className={cn("rounded px-1", m.estado === "falhou" || m.estado === "desconhecido" ? "bg-red-100 text-red-700" : m.estado === "na_fila" ? "bg-app-soft text-app-muted" : "text-app-muted")}>
               {ESTADO_LABEL[m.estado] ?? m.estado}
             </span>
           )}

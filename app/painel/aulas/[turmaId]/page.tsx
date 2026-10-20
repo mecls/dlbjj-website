@@ -19,10 +19,10 @@ export default async function AulaPage({ params, searchParams }: { params: Promi
 
   return (
     <div className="space-y-4">
-      <Link href="/painel/aulas" className="text-sm text-neutral-500 hover:underline">
+      <Link href="/painel/aulas" className="text-sm text-app-muted hover:underline">
         ← Aulas
       </Link>
-      <h1 className="text-xl font-semibold">
+      <h1 className="text-[28px] font-bold tracking-tight text-app-text">
         {turma.turma} · {localPorSlug(turma.local_slug)?.nome} · {turma.dias} {turma.horario.slice(0, 5)}
       </h1>
       {sp.erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">Não guardou: {sp.erro}</p>}
@@ -30,26 +30,26 @@ export default async function AulaPage({ params, searchParams }: { params: Promi
 
       <form method="get" className="flex items-end gap-2 text-sm">
         <label className="grid gap-1">
-          <span className="text-xs text-neutral-500">Dia</span>
-          <input type="date" name="data" defaultValue={data} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+          <span className="text-xs text-app-muted">Dia</span>
+          <input type="date" name="data" defaultValue={data} className="rounded-lg border border-app-border px-2 py-1.5" />
         </label>
-        <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5">Ver</button>
+        <button className="rounded-lg border border-app-border bg-white px-3 py-1.5">Ver</button>
       </form>
 
       <Card className="p-5 text-sm">
         <div className="mb-3 flex items-baseline justify-between">
           <h2 className="font-semibold">Presenças em {data}</h2>
-          <span className="text-neutral-500">{presentes} / {lista.length}</span>
+          <span className="text-app-muted">{presentes} / {lista.length}</span>
         </div>
         {lista.length === 0 ? (
-          <p className="text-neutral-400">Não há alunos ativos nesta academia.</p>
+          <p className="text-app-muted">Não há alunos ativos nesta academia.</p>
         ) : (
           <form method="post" action={`/api/painel/aulas/${turma.id}/presencas`} className="grid gap-2">
             <input type="hidden" name="data" value={data} />
             {lista.map((a) => (
               <label key={a.id} className="flex items-center gap-2">
                 <input type="checkbox" name="aluno_ids" value={a.id} defaultChecked={a.presente} disabled={a.presente} />
-                <span className={a.presente ? "text-neutral-400" : ""}>{a.nome}</span>
+                <span className={a.presente ? "text-app-muted" : ""}>{a.nome}</span>
                 {a.presente && <span className="text-xs text-emerald-700">presente</span>}
               </label>
             ))}

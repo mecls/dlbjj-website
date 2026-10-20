@@ -35,7 +35,7 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
 
   return (
     <div className="space-y-4">
-      <Link href="/painel/alunos" className="text-sm text-neutral-500 hover:underline">
+      <Link href="/painel/alunos" className="text-sm text-app-muted hover:underline">
         ← Alunos
       </Link>
       {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{ERROS[erro] ?? erro}</p>}
@@ -47,7 +47,7 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
             <h1 className="text-lg font-semibold">{a.nome}</h1>
             <EstadoAlunoBadge estado={a.estado} />
           </div>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-app-muted">
             {a.phone} ·{" "}
             <Link href={`/painel/${a.phone}`} className="hover:underline">
               conversa
@@ -68,13 +68,13 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
           </dl>
           {!anonimizado && (
             <>
-              <h2 className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-500">Encarregado de educação</h2>
+              <h2 className="mt-5 text-xs font-semibold uppercase tracking-wide text-app-muted">Encarregado de educação</h2>
               <dl className="mt-2 space-y-2 text-sm">
                 <L r="Nome" v={s("enc_nome")} />
                 <L r="Telemóvel" v={s("enc_telefone")} />
                 <L r="Relação" v={s("enc_relacao")} />
               </dl>
-              <h2 className="mt-5 text-xs font-semibold uppercase tracking-wide text-neutral-500">Saúde e emergência</h2>
+              <h2 className="mt-5 text-xs font-semibold uppercase tracking-wide text-app-muted">Saúde e emergência</h2>
               <dl className="mt-2 space-y-2 text-sm">
                 <L r="Contacto" v={`${s("contacto_emergencia_nome")} ${s("contacto_emergencia_telefone")}`} />
                 <L r="Condições" v={s("condicoes_saude")} />
@@ -91,73 +91,73 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
               <form method="post" action={`${acao}/graduacao`} className="grid gap-2">
                 <h2 className="font-semibold">Registar graduação</h2>
                 <div className="flex flex-wrap gap-2">
-                  <select name="faixa" className="rounded-lg border border-neutral-300 px-2 py-1.5" defaultValue={faixa?.faixa ?? "branca"}>
+                  <select name="faixa" className="rounded-lg border border-app-border px-2 py-1.5" defaultValue={faixa?.faixa ?? "branca"}>
                     {FAIXAS.map((f) => (
                       <option key={f} value={f}>
                         {FAIXA_LABEL[f]}
                       </option>
                     ))}
                   </select>
-                  <select name="graus" className="rounded-lg border border-neutral-300 px-2 py-1.5" defaultValue="0">
+                  <select name="graus" className="rounded-lg border border-app-border px-2 py-1.5" defaultValue="0">
                     {[0, 1, 2, 3, 4].map((g) => (
                       <option key={g} value={g}>
                         {g} graus
                       </option>
                     ))}
                   </select>
-                  <input name="atribuida_em" type="date" required defaultValue={hojeLisboa()} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                  <input name="atribuida_em" type="date" required defaultValue={hojeLisboa()} className="rounded-lg border border-app-border px-2 py-1.5" />
                 </div>
-                <input name="nota" placeholder="Nota (opcional)" className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                <input name="nota" placeholder="Nota (opcional)" className="rounded-lg border border-app-border px-2 py-1.5" />
                 <button className="rounded-lg bg-dl-red px-3 py-1.5 font-medium text-white hover:bg-dl-red-hover">Registar</button>
               </form>
 
-              <form method="post" action={`${acao}/presenca`} className="grid gap-2 border-t border-neutral-100 pt-4">
+              <form method="post" action={`${acao}/presenca`} className="grid gap-2 border-t border-app-border pt-4">
                 <h2 className="font-semibold">Marcar presença</h2>
                 <div className="flex flex-wrap gap-2">
-                  <select name="turma_id" className="rounded-lg border border-neutral-300 px-2 py-1.5" defaultValue={(a.turma_preferida as string) ?? ""}>
+                  <select name="turma_id" className="rounded-lg border border-app-border px-2 py-1.5" defaultValue={(a.turma_preferida as string) ?? ""}>
                     {(turmasDoLocal.length ? turmasDoLocal : turmas).map((t) => (
                       <option key={t.id} value={t.id}>
                         {localPorSlug(t.local_slug)?.nome} · {t.turma} · {t.dias} {t.horario.slice(0, 5)}
                       </option>
                     ))}
                   </select>
-                  <input name="data" type="date" required defaultValue={hojeLisboa()} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                  <input name="data" type="date" required defaultValue={hojeLisboa()} className="rounded-lg border border-app-border px-2 py-1.5" />
                 </div>
-                <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Marcar</button>
+                <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Marcar</button>
               </form>
 
-              <div className="flex flex-wrap gap-2 border-t border-neutral-100 pt-4">
+              <div className="flex flex-wrap gap-2 border-t border-app-border pt-4">
                 <form method="post" action={`${acao}/perfil-link`}>
-                  <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Enviar link do perfil</button>
+                  <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Enviar link do perfil</button>
                 </form>
                 <form method="post" action={`${acao}/ranking`} className="flex items-center gap-2">
                   <label className="flex items-center gap-2">
                     <input type="checkbox" name="visivel" value="1" defaultChecked={a.ranking_visivel !== false} />
                     Aparece no ranking
                   </label>
-                  <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Guardar</button>
+                  <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Guardar</button>
                 </form>
                 {a.estado !== "ativo" && (
                   <form method="post" action={`${acao}/estado`}>
                     <input type="hidden" name="estado" value="ativo" />
-                    <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Marcar ativo</button>
+                    <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Marcar ativo</button>
                   </form>
                 )}
                 {a.estado !== "inativo" && (
                   <form method="post" action={`${acao}/estado`}>
                     <input type="hidden" name="estado" value="inativo" />
-                    <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Marcar inativo</button>
+                    <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Marcar inativo</button>
                   </form>
                 )}
                 {a.estado !== "ex_aluno" && (
                   <form method="post" action={`${acao}/estado`}>
                     <input type="hidden" name="estado" value="ex_aluno" />
-                    <button className="rounded-lg border border-neutral-300 bg-white px-3 py-1.5 font-medium hover:bg-neutral-50">Marcar ex-aluno</button>
+                    <button className="rounded-lg border border-app-border bg-white px-3 py-1.5 font-medium hover:bg-app-soft">Marcar ex-aluno</button>
                   </form>
                 )}
               </div>
 
-              <details className="border-t border-neutral-100 pt-4">
+              <details className="border-t border-app-border pt-4">
                 <summary className="cursor-pointer font-semibold">Editar ficha</summary>
                 <form method="post" action={`${acao}/editar`} className="mt-3 grid gap-2">
                   {[
@@ -173,13 +173,13 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
                     ["contacto_emergencia_telefone", "Emergência — telemóvel"],
                   ].map(([k, r]) => (
                     <label key={k} className="grid gap-1">
-                      <span className="text-xs text-neutral-500">{r}</span>
-                      <input name={k} defaultValue={typeof a[k] === "string" ? (a[k] as string) : ""} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                      <span className="text-xs text-app-muted">{r}</span>
+                      <input name={k} defaultValue={typeof a[k] === "string" ? (a[k] as string) : ""} className="rounded-lg border border-app-border px-2 py-1.5" />
                     </label>
                   ))}
                   <label className="grid gap-1">
-                    <span className="text-xs text-neutral-500">Academia</span>
-                    <select name="local_slug" defaultValue={(a.local_slug as string) ?? ""} className="rounded-lg border border-neutral-300 px-2 py-1.5">
+                    <span className="text-xs text-app-muted">Academia</span>
+                    <select name="local_slug" defaultValue={(a.local_slug as string) ?? ""} className="rounded-lg border border-app-border px-2 py-1.5">
                       {locais.map((l) => (
                         <option key={l.slug} value={l.slug}>
                           {l.nome}
@@ -188,22 +188,22 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
                     </select>
                   </label>
                   <label className="grid gap-1">
-                    <span className="text-xs text-neutral-500">Condições de saúde</span>
-                    <textarea name="condicoes_saude" rows={2} defaultValue={s("condicoes_saude") === "—" ? "" : s("condicoes_saude")} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                    <span className="text-xs text-app-muted">Condições de saúde</span>
+                    <textarea name="condicoes_saude" rows={2} defaultValue={s("condicoes_saude") === "—" ? "" : s("condicoes_saude")} className="rounded-lg border border-app-border px-2 py-1.5" />
                   </label>
                   <label className="grid gap-1">
-                    <span className="text-xs text-neutral-500">Notas</span>
-                    <textarea name="notas" rows={2} defaultValue={s("notas") === "—" ? "" : s("notas")} className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                    <span className="text-xs text-app-muted">Notas</span>
+                    <textarea name="notas" rows={2} defaultValue={s("notas") === "—" ? "" : s("notas")} className="rounded-lg border border-app-border px-2 py-1.5" />
                   </label>
                   <button className="rounded-lg bg-dl-red px-3 py-1.5 font-medium text-white hover:bg-dl-red-hover">Guardar</button>
                 </form>
               </details>
 
-              <details className="border-t border-neutral-100 pt-4">
+              <details className="border-t border-app-border pt-4">
                 <summary className="cursor-pointer font-semibold text-red-700">Anonimizar</summary>
                 <form method="post" action={`${acao}/anonimizar`} className="mt-3 grid gap-2">
-                  <p className="text-neutral-600">Substitui o nome, telemóvel e todos os dados pessoais. As faixas e presenças ficam. Não se desfaz.</p>
-                  <input name="confirmacao" placeholder="Escreve ANONIMIZAR" className="rounded-lg border border-neutral-300 px-2 py-1.5" />
+                  <p className="text-app-muted">Substitui o nome, telemóvel e todos os dados pessoais. As faixas e presenças ficam. Não se desfaz.</p>
+                  <input name="confirmacao" placeholder="Escreve ANONIMIZAR" className="rounded-lg border border-app-border px-2 py-1.5" />
                   <button className="rounded-lg bg-red-700 px-3 py-1.5 font-medium text-white hover:bg-red-800">Anonimizar</button>
                 </form>
               </details>
@@ -213,13 +213,13 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
           <Card className="p-5 text-sm">
             <h2 className="font-semibold">Histórico de faixas</h2>
             {grads.length === 0 ? (
-              <p className="mt-2 text-neutral-400">Sem graduações registadas.</p>
+              <p className="mt-2 text-app-muted">Sem graduações registadas.</p>
             ) : (
               <ul className="mt-2 space-y-1">
                 {grads.map((g) => (
                   <li key={g.id} className="flex justify-between">
                     <span>{descreverFaixa(g)}</span>
-                    <span className="text-neutral-500">
+                    <span className="text-app-muted">
                       {dataPt(g.atribuida_em)}
                       {g.nota ? ` · ${g.nota}` : ""}
                     </span>
@@ -232,13 +232,13 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
           <Card className="p-5 text-sm">
             <h2 className="font-semibold">Presenças (90 dias): {presencas.length}</h2>
             {presencas.length === 0 ? (
-              <p className="mt-2 text-neutral-400">Sem presenças registadas.</p>
+              <p className="mt-2 text-app-muted">Sem presenças registadas.</p>
             ) : (
               <ul className="mt-2 max-h-64 space-y-1 overflow-y-auto">
                 {presencas.map((p, i) => (
                   <li key={i} className="flex justify-between">
                     <span>{dataPt(p.data)}</span>
-                    <span className="text-neutral-500">
+                    <span className="text-app-muted">
                       {p.dlbjj_turmas ? `${p.dlbjj_turmas.turma} ${p.dlbjj_turmas.horario.slice(0, 5)}` : ""} · {p.origem}
                     </span>
                   </li>
@@ -255,8 +255,8 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
 function L({ r, v }: { r: string; v: string }) {
   return (
     <div className="flex gap-2">
-      <dt className="w-28 shrink-0 text-neutral-400">{r}</dt>
-      <dd className="text-neutral-800">{v}</dd>
+      <dt className="w-28 shrink-0 text-app-muted">{r}</dt>
+      <dd className="text-app-text">{v}</dd>
     </div>
   );
 }

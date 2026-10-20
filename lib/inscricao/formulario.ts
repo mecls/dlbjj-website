@@ -19,13 +19,13 @@ export interface TurmaOpcao {
 }
 
 export const ESTILO_FORMULARIO = `
-.f{display:grid;gap:14px;background:#fff;border:1px solid #e5e5e5;border-radius:14px;padding:20px}
-.f label{display:grid;gap:4px;font-size:.9rem}.f input,.f select,.f textarea{font:inherit;padding:10px;border:1px solid #d4d4d4;border-radius:8px;width:100%}
-.f fieldset{border:1px solid #e5e5e5;border-radius:10px;padding:12px 14px;display:grid;gap:12px}.f legend{font-weight:600;padding:0 6px}
+.f{display:grid;gap:14px;background:#fff;border:1px solid #e6e8ec;border-radius:14px;padding:20px}
+.f label{display:grid;gap:4px;font-size:.9rem}.f input,.f select,.f textarea{font:inherit;padding:10px;border:1px solid #e6e8ec;border-radius:8px;width:100%}
+.f fieldset{border:1px solid #e6e8ec;border-radius:10px;padding:12px 14px;display:grid;gap:12px}.f legend{font-weight:600;padding:0 6px}
 .f .erro{color:#b91c1c;font-size:.85rem}.f .aviso{background:#fef2f2;border:1px solid #fecaca;color:#991b1b;padding:10px 12px;border-radius:8px}
 .f .check{display:flex;gap:10px;align-items:flex-start}.f .check input{width:auto;margin-top:4px}
 .f button{background:#ED1C24;color:#fff;border:0;border-radius:10px;padding:12px;font:inherit;font-weight:600;cursor:pointer}
-.f small{color:#737373}`;
+.f small{color:#6b7280}`;
 
 export function formularioHtml(o: { action: string; valores: Record<string, string>; erros: Record<string, string>; turmas: TurmaOpcao[] }): string {
   const v = (k: string) => escapar(o.valores[k] ?? "");

@@ -29,26 +29,26 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
 
   return (
     <div className="space-y-4">
-      <h1 className="text-xl font-semibold">Agente</h1>
+      <h1 className="text-[28px] font-bold tracking-tight text-app-text">Agente</h1>
       {ok && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Guardado.</p>}
 
       <Card className="flex items-center justify-between p-5">
         <div>
           <h2 className="font-semibold">Interruptor do bot</h2>
-          <p className="text-sm text-neutral-500">
+          <p className="text-sm text-app-muted">
             {botLigado ? "Ligado — o bot responde e faz os toques de reativação." : "Desligado — nada sai; o que estava em fila é cancelado. As mensagens do Daniel pelo painel continuam a sair."}
           </p>
         </div>
         <form method="post" action="/api/painel/agente/interruptor">
           <input type="hidden" name="estado" value={botLigado ? "off" : "on"} />
-          <button className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${botLigado ? "bg-emerald-600 hover:bg-emerald-700" : "bg-neutral-500 hover:bg-neutral-600"}`}>
+          <button className={`rounded-lg px-4 py-2 text-sm font-semibold text-white ${botLigado ? "bg-emerald-600 hover:bg-emerald-700" : "bg-app-muted hover:bg-app-icon"}`}>
             {botLigado ? "Ligado" : "Desligado"}
           </button>
         </form>
       </Card>
 
       {!sessao ? (
-        <Card className="p-5 text-sm text-neutral-500">O worker ainda não reportou. Segue o runbook em docker/README.md.</Card>
+        <Card className="p-5 text-sm text-app-muted">O worker ainda não reportou. Segue o runbook em docker/README.md.</Card>
       ) : sessao.estado === "caido" ? (
         <Card className="border-red-200 bg-red-50 p-5 text-sm text-red-800">
           <h2 className="font-semibold">Sessão WhatsApp em baixo{sessao.detalhe ? `: ${sessao.detalhe}` : ""}</h2>
@@ -68,12 +68,12 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
       {(desconhecidos ?? []).length > 0 && (
         <Card className="p-5 text-sm">
           <h2 className="font-semibold text-red-700">Envios desconhecidos</h2>
-          <p className="mb-2 text-neutral-500">O gateway não respondeu a tempo. Podem ter chegado ou não; nunca são repetidos sozinhos. Confirma no telemóvel e, se faltar, responde pelo painel.</p>
+          <p className="mb-2 text-app-muted">O gateway não respondeu a tempo. Podem ter chegado ou não; nunca são repetidos sozinhos. Confirma no telemóvel e, se faltar, responde pelo painel.</p>
           <ul className="space-y-1">
             {(desconhecidos ?? []).map((d) => (
               <li key={d.id} className="flex justify-between gap-3">
                 <span className="truncate">{d.phone} · {d.corpo.slice(0, 60)}</span>
-                <span className="shrink-0 text-neutral-500">{d.erro} · {timeAgo(d.updated_at)}</span>
+                <span className="shrink-0 text-app-muted">{d.erro} · {timeAgo(d.updated_at)}</span>
               </li>
             ))}
           </ul>
@@ -83,12 +83,12 @@ export default async function AgentePage({ searchParams }: { searchParams?: Prom
       {(falhadas ?? []).length > 0 && (
         <Card className="p-5 text-sm">
           <h2 className="font-semibold text-red-700">Mensagens recebidas por processar</h2>
-          <p className="mb-2 text-neutral-500">A app não aceitou estas entregas depois de 4 tentativas. A pessoa escreveu e não teve resposta.</p>
+          <p className="mb-2 text-app-muted">A app não aceitou estas entregas depois de 4 tentativas. A pessoa escreveu e não teve resposta.</p>
           <ul className="space-y-1">
             {(falhadas ?? []).map((f) => (
               <li key={f.id} className="flex justify-between gap-3">
                 <span className="truncate">{String((f.payload as { from?: string }).from ?? "?")} · {String((f.payload as { text?: string }).text ?? "").slice(0, 60)}</span>
-                <span className="shrink-0 text-neutral-500">{f.erro} · {timeAgo(f.created_at)}</span>
+                <span className="shrink-0 text-app-muted">{f.erro} · {timeAgo(f.created_at)}</span>
               </li>
             ))}
           </ul>

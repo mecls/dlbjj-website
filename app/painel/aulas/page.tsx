@@ -16,19 +16,19 @@ export default async function AulasPage({ searchParams }: { searchParams?: Promi
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Aulas</h1>
+        <h1 className="text-[28px] font-bold tracking-tight text-app-text">Aulas</h1>
         <div className="flex gap-2 text-sm">
           {[30, 90].map((d) => (
-            <Link key={d} href={`/painel/aulas?dias=${d}`} className={`rounded-lg px-3 py-1 ${periodo === d ? "bg-neutral-900 text-white" : "border border-neutral-300 bg-white"}`}>
+            <Link key={d} href={`/painel/aulas?dias=${d}`} className={`rounded-lg px-3 py-1 ${periodo === d ? "bg-app-soft font-medium text-app-text" : "border border-app-border bg-white"}`}>
               {d} dias
             </Link>
           ))}
         </div>
       </div>
-      {total === 0 && <p className="text-sm text-neutral-500">Ainda não há presenças registadas.</p>}
+      {total === 0 && <p className="text-sm text-app-muted">Ainda não há presenças registadas.</p>}
       <Card className="overflow-hidden">
         <table className="w-full text-sm">
-          <thead className="bg-neutral-50 text-left text-xs uppercase tracking-wide text-neutral-500">
+          <thead className="bg-app-page text-left text-xs uppercase tracking-wide text-app-muted">
             <tr>
               <th className="px-4 py-2">Turma</th>
               <th className="px-4 py-2">Local</th>
@@ -40,7 +40,7 @@ export default async function AulasPage({ searchParams }: { searchParams?: Promi
           </thead>
           <tbody>
             {ranking.map((t, i) => (
-              <tr key={t.id} className="border-t border-neutral-100 hover:bg-neutral-50">
+              <tr key={t.id} className="border-t border-app-border hover:bg-app-soft">
                 <td className="px-4 py-2">
                   <Link href={`/painel/aulas/${t.id}`} className="font-medium hover:underline">
                     {t.turma}
@@ -49,9 +49,9 @@ export default async function AulasPage({ searchParams }: { searchParams?: Promi
                     <span className="ml-2 rounded bg-emerald-100 px-1.5 py-0.5 text-[10px] font-medium text-emerald-800">a aula com mais alunos</span>
                   )}
                 </td>
-                <td className="px-4 py-2 text-neutral-600">{localPorSlug(t.local_slug)?.nome ?? t.local_slug}</td>
-                <td className="px-4 py-2 text-neutral-600">{t.dias}</td>
-                <td className="px-4 py-2 text-neutral-600">{t.horario.slice(0, 5)}</td>
+                <td className="px-4 py-2 text-app-muted">{localPorSlug(t.local_slug)?.nome ?? t.local_slug}</td>
+                <td className="px-4 py-2 text-app-muted">{t.dias}</td>
+                <td className="px-4 py-2 text-app-muted">{t.horario.slice(0, 5)}</td>
                 <td className="px-4 py-2 text-right">{t.presencas}</td>
                 <td className="px-4 py-2 text-right">{t.alunos}</td>
               </tr>

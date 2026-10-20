@@ -26,7 +26,7 @@ export function ReplyBox({ phone }: { phone: string }) {
   }
 
   return (
-    <div className="border-t border-neutral-100 p-3">
+    <div className="border-t border-app-border p-3">
       {erro && <p className="mb-2 text-xs text-red-700">{erro}</p>}
     <div className="flex items-center gap-2">
       <input
@@ -34,7 +34,7 @@ export function ReplyBox({ phone }: { phone: string }) {
         onChange={(e) => setText(e.target.value)}
         onKeyDown={(e) => e.key === "Enter" && send()}
         placeholder="Responder como Daniel (pausa o bot)…"
-        className="flex-1 rounded-lg border border-neutral-300 px-3 py-2 text-sm"
+        className="flex-1 rounded-lg border border-app-border px-3 py-2 text-sm"
       />
       <Button onClick={send} disabled={pending}>
         Enviar

@@ -29,8 +29,8 @@ export default async function ReativacaoPage({ searchParams }: { searchParams?: 
   return (
     <div className="space-y-4">
       <div className="flex items-baseline justify-between">
-        <h1 className="text-xl font-semibold">Reativação</h1>
-        <span className="text-sm text-neutral-600">{`Enviadas hoje: ${orc?.proativas ?? 0} / ${tecto?.value ?? 10}`}</span>
+        <h1 className="text-[28px] font-bold tracking-tight text-app-text">Reativação</h1>
+        <span className="text-sm text-app-muted">{`Enviadas hoje: ${orc?.proativas ?? 0} / ${tecto?.value ?? 10}`}</span>
       </div>
       {ok && <p className="rounded-lg bg-emerald-50 px-3 py-2 text-sm text-emerald-700">Feito.</p>}
       {erro && <p className="rounded-lg bg-red-50 px-3 py-2 text-sm text-red-700">{erro}</p>}
@@ -43,26 +43,26 @@ export default async function ReativacaoPage({ searchParams }: { searchParams?: 
           </form>
         </div>
         {devidos.length === 0 ? (
-          <p className="text-neutral-400">Ninguém está em atraso. As regras correm de hora a hora.</p>
+          <p className="text-app-muted">Ninguém está em atraso. As regras correm de hora a hora.</p>
         ) : (
           <table className="w-full">
             <tbody>
               {devidos.map((d) => (
-                <tr key={`${d.phone}-${d.regra}`} className="border-t border-neutral-100">
+                <tr key={`${d.phone}-${d.regra}`} className="border-t border-app-border">
                   <td className="py-2 font-medium">{d.nome || d.phone}</td>
-                  <td className="py-2 text-neutral-500">{d.regra}</td>
-                  <td className="py-2 text-neutral-500">{d.corpo.slice(0, 60)}…</td>
+                  <td className="py-2 text-app-muted">{d.regra}</td>
+                  <td className="py-2 text-app-muted">{d.corpo.slice(0, 60)}…</td>
                   <td className="py-2 text-right">
                     <div className="flex justify-end gap-2">
                       <form method="post" action="/api/painel/reativacao/enviar">
                         <input type="hidden" name="phone" value={d.phone} />
                         <input type="hidden" name="regra" value={d.regra} />
-                        <button className="rounded-lg border border-neutral-300 bg-white px-2 py-1 hover:bg-neutral-50">Enviar agora</button>
+                        <button className="rounded-lg border border-app-border bg-white px-2 py-1 hover:bg-app-soft">Enviar agora</button>
                       </form>
                       <form method="post" action="/api/painel/reativacao/saltar">
                         <input type="hidden" name="phone" value={d.phone} />
                         <input type="hidden" name="regra" value={d.regra} />
-                        <button className="rounded-lg border border-neutral-300 bg-white px-2 py-1 hover:bg-neutral-50">Saltar</button>
+                        <button className="rounded-lg border border-app-border bg-white px-2 py-1 hover:bg-app-soft">Saltar</button>
                       </form>
                     </div>
                   </td>
@@ -76,10 +76,10 @@ export default async function ReativacaoPage({ searchParams }: { searchParams?: 
       <Card className="p-5 text-sm">
         <h2 className="mb-3 font-semibold">Toques</h2>
         {(toques ?? []).length === 0 ? (
-          <p className="text-neutral-400">Ainda não saiu nenhum toque.</p>
+          <p className="text-app-muted">Ainda não saiu nenhum toque.</p>
         ) : (
           <table className="w-full">
-            <thead className="text-left text-xs uppercase tracking-wide text-neutral-500">
+            <thead className="text-left text-xs uppercase tracking-wide text-app-muted">
               <tr>
                 <th className="py-1">Quem</th>
                 <th className="py-1">Regra</th>
@@ -90,12 +90,12 @@ export default async function ReativacaoPage({ searchParams }: { searchParams?: 
             </thead>
             <tbody>
               {(toques ?? []).map((t) => (
-                <tr key={t.id} className="border-t border-neutral-100">
+                <tr key={t.id} className="border-t border-app-border">
                   <td className="py-1">{nomes.get(t.aluno_id ?? "") || nomes.get(t.lead_id ?? "") || t.phone}</td>
-                  <td className="py-1 text-neutral-500">{t.regra}</td>
+                  <td className="py-1 text-app-muted">{t.regra}</td>
                   <td className="py-1">{ESTADO_TOQUE[t.estado] ?? t.estado}</td>
-                  <td className="py-1 text-neutral-500">{t.enviada_em ? dataPt(t.enviada_em) : "—"}</td>
-                  <td className="py-1 text-neutral-500">{t.respondeu_em ? `respondeu a ${t.regra}` : "—"}</td>
+                  <td className="py-1 text-app-muted">{t.enviada_em ? dataPt(t.enviada_em) : "—"}</td>
+                  <td className="py-1 text-app-muted">{t.respondeu_em ? `respondeu a ${t.regra}` : "—"}</td>
                 </tr>
               ))}
             </tbody>
@@ -105,8 +105,8 @@ export default async function ReativacaoPage({ searchParams }: { searchParams?: 
 
       <Card className="p-5 text-sm">
         <h2 className="mb-3 font-semibold">Opt-outs ({(optOuts ?? []).length})</h2>
-        <p className="mb-2 text-neutral-500">Só o início do hash e a data: estes números nunca mais recebem proativas.</p>
-        <ul className="space-y-1 font-mono text-xs text-neutral-600">
+        <p className="mb-2 text-app-muted">Só o início do hash e a data: estes números nunca mais recebem proativas.</p>
+        <ul className="space-y-1 font-mono text-xs text-app-muted">
           {(optOuts ?? []).map((o) => (
             <li key={o.phone_hash}>
               opt-out {o.phone_hash.slice(0, 10)}… · {dataPt(o.created_at)}

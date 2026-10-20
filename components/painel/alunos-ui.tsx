@@ -11,13 +11,13 @@ export const ESTADO_ALUNO_LABEL: Record<string, string> = {
 const ESTILO: Record<string, string> = {
   ativo: "bg-emerald-100 text-emerald-800",
   inativo: "bg-amber-100 text-amber-800",
-  ex_aluno: "bg-neutral-200 text-neutral-600",
-  anonimizado: "bg-neutral-100 text-neutral-400",
+  ex_aluno: "bg-app-soft text-app-muted",
+  anonimizado: "bg-app-soft text-app-muted",
 };
 
 export function EstadoAlunoBadge({ estado }: { estado: string }) {
   return (
-    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", ESTILO[estado] ?? "bg-neutral-100")}>
+    <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", ESTILO[estado] ?? "bg-app-soft")}>
       {ESTADO_ALUNO_LABEL[estado] ?? estado}
     </span>
   );

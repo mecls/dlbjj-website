@@ -16,7 +16,7 @@ export default defineConfig({
     setupFiles: ["tests/helpers/env.ts"],
     globalSetup: ["tests/helpers/global-e2e.ts"],
     testTimeout: 30_000,
-    hookTimeout: 120_000,
+    hookTimeout: 240_000, // resetDb tenta até 3× (ver tests/helpers/db.ts)
     // Os testes de integração e e2e partilham uma base de dados local; correm
     // em série para não se pisarem.
     fileParallelism: false,
