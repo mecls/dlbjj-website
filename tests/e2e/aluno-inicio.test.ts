@@ -19,8 +19,9 @@ describe("Início do aluno (design §5.2)", () => {
     const { count } = await sb.from("dlbjj_presencas").select("*", { count: "exact", head: true }).eq("aluno_id", ana.id).gte("data", `${hojeLisboa().slice(0, 7)}-01`);
     expect(html).toMatch(new RegExp(`>${count}<[\\s\\S]{0,200}Aulas este mês`));
     expect(html).toMatch(/>18<[\s\S]{0,200}Aulas desde o início/);
-    for (const t of ["Dias seguidos", "Posição no ranking", "de 4 este mês", "A minha academia", "Aulas esta semana", "Presenças este mês", "Alunos ativos", "Turma mais concorrida", "Aulas de hoje"]) expect(html, t).toContain(t);
-    expect(html).toMatch(/>4<[\s\S]{0,200}Alunos ativos/);
+    for (const t of ["Dias seguidos", "Posição no ranking", "de 4 este mês", "Aulas de hoje"]) expect(html, t).toContain(t);
+    // os números da academia inteira são do painel do Daniel, não do aluno
+    for (const t of ["A minha academia", "Aulas esta semana", "Presenças este mês", "Alunos ativos", "Turma mais concorrida"]) expect(html, t).not.toContain(t);
     expect(html).toContain('title="'); // células do mapa de calor
     expect(html).not.toContain(ana.phone);
     expect(html).not.toContain("ana@example.com");

@@ -487,6 +487,8 @@ answers, all my calls unless marked; Miguel can overrule any of them.
 9. **Logo.** `public/brand/logo.png`. The reference screenshot is committed as
    `docs/superpowers/specs/2026-10-20-referencia-matgoat.png`.
 
+10. **(2026-10-20, after the first test) Miguel: the student does not see the academy-wide numbers.** The "A minha academia" section in §5.2 is removed from the student Início; those numbers live only on Daniel's painel. §5.2's academy cards and the matching e2e assertions are gone.
+
 ## 11. Left to the builder
 
 - Exact component split and file names under `components/app/` (shell,
