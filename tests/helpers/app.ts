@@ -51,7 +51,7 @@ export async function startApp(): Promise<{ baseUrl: string; stop: () => Promise
   }
   if (!(await pronto())) {
     try { process.kill(-child.pid!, "SIGTERM"); } catch { /* já morreu */ }
-    throw new Error(`next dev não ficou pronto em 120 s:\n${saida.slice(-2000)}`);
+    throw new Error(`next dev não ficou pronto em 120 s (NODE_ENV=${process.env.NODE_ENV ?? ""} VERCEL_ENV=${process.env.VERCEL_ENV ?? ""}):\n${saida.slice(-2000)}`);
   }
 
   return {
