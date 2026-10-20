@@ -57,5 +57,6 @@ describe("Produção sem segredos: tudo fechado (AC-11)", () => {
     expect(e.status).toBe(303);
     expect(e.headers.get("location")).toMatch(/\/aluno\/entrar$/);
     expect((await fetch(`${PROD_URL}/api/painel/eventos`, { method: "POST", headers: form, body: "titulo=x&dia=2026-12-01", redirect: "manual" })).status).toBe(401);
+    expect((await fetch(`${PROD_URL}/api/painel/eventos.ics?chave=x`)).status).toBe(503); // sem DASHBOARD_PASSWORD não há feed
   });
 });

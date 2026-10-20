@@ -82,8 +82,10 @@ Início (o agente, alunos ativos, presenças e inscrições do mês, conversas �
 espera, a academia) · Mensagens (leads e conversa, assumir/retomar, **Enviar
 inscrição**; o crachá e o sino acendem quando alguém espera por ele) · Alunos
 (ficha, graduações, presenças, anonimizar, novo aluno, "Aparece no ranking") ·
-Aulas (ranking e lista de presenças por dia) · Eventos (seminários,
-graduações…; os alunos veem-nos no calendário) · Reativação (em atraso, Saltar,
+Aulas (um cartão por espaço e o horário semanal com presenças) · Eventos
+(calendário; seminários, graduações…; os alunos veem-nos no calendário deles;
+um feed ICS com chave privada para subscrever no Google Calendar ou no Apple
+Calendar) · Reativação (em atraso, Saltar,
 Enviar agora, toques, opt-outs) · Agente (interruptor, sessão, envios
 desconhecidos, entradas por processar). O «Perguntar» (chat só com os dados)
 está desligado por agora; o catálogo de ferramentas em `lib/perguntar/` fica

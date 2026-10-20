@@ -1,6 +1,7 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { db, FIXTURES, resetDb } from "../helpers/db";
 import { getPainel, postPainel } from "../helpers/painel";
+import { E2E_URL } from "../helpers/app";
 import { getAluno, sessaoDe } from "../helpers/aluno";
 import { hojeLisboa, somarDias } from "@/lib/tempo";
 
@@ -46,5 +47,22 @@ describe("Painel — eventos (ajustes §2.5)", () => {
   });
   it("sem sessão → 401", async () => {
     expect((await postPainel("/api/painel/eventos", { titulo: "x", dia: "2026-12-01" }, false)).status).toBe(401);
+  });
+  it("o feed ICS serve os eventos com a chave e recusa sem ela", async () => {
+    const { chaveIcs } = await import("@/lib/painel/ics-chave");
+    const r = await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=${chaveIcs()}`);
+    expect(r.status).toBe(200);
+    expect(r.headers.get("content-type")).toContain("text/calendar");
+    const ics = await r.text();
+    expect(ics).toContain("SUMMARY:Seminário de guarda com convidado");
+    expect(ics).toContain("SUMMARY:Graduação de fim de ano");
+    expect((await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=errada`)).status).toBe(401);
+    expect((await fetch(`${E2E_URL}/api/painel/eventos.ics`)).status).toBe(401);
+  });
+  it("a página mostra o endereço do feed", async () => {
+    const html = await (await getPainel("/painel/eventos")).text();
+    expect(html).toContain("Sincronizar com o teu calendário");
+    expect(html).toContain("/api/painel/eventos.ics?chave=");
+    expect(html).toContain("webcal://");
   });
 });

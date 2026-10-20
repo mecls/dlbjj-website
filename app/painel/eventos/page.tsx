@@ -3,6 +3,9 @@ import { locais, localPorSlug } from "@/content/site";
 import { Aviso, BotaoLink, Button, Card, Input, Label, PageHeader, Rotulo, Select, Textarea } from "@/components/app/ui";
 import { Icone } from "@/components/app/icones";
 import { EventoModal } from "@/components/painel/evento-modal";
+import { Copiar } from "@/components/painel/copiar";
+import { APP } from "@/lib/config";
+import { chaveIcs } from "@/lib/painel/ics-chave";
 import { requireAuth } from "@/lib/auth";
 import { mesAnterior, mesDeCalendario, mesSeguinte, mesValido, type CelulaCalendario } from "@/lib/aluno/estatisticas";
 import { DIAS_CURTOS, MESES, diaCurto } from "@/lib/datas-pt";
@@ -85,6 +88,9 @@ export default async function EventosPage({ searchParams }: { searchParams?: Pro
   const semanas = mesDeCalendario(mes, [], eventos, [], hoje);
   const dias = semanas.flat().filter((c) => c.noMes && (c.hoje || c.eventos.length > 0));
   const fechar = `/painel/eventos?mes=${mes}`;
+  const chave = chaveIcs();
+  const feedHttps = chave ? `${APP.baseUrl()}/api/painel/eventos.ics?chave=${chave}` : null;
+  const feedWebcal = feedHttps ? feedHttps.replace(/^https?:\/\//, "webcal://") : null;
 
   return (
     <div className="space-y-6">
@@ -157,6 +163,33 @@ export default async function EventosPage({ searchParams }: { searchParams?: Pro
           </Card>
         )}
       </section>
+
+      <Card className="p-5">
+        <h2 className="font-semibold">Sincronizar com o teu calendário</h2>
+        {feedHttps && feedWebcal ? (
+          <>
+            <p className="mt-1 text-sm text-app-muted">Subscreve uma vez; os eventos novos e as alterações aparecem sozinhos. É só de leitura: o que mudares lá não volta para aqui.</p>
+            <div className="mt-3 flex items-center gap-2">
+              <code className="min-w-0 flex-1 truncate rounded-lg border border-app-border bg-app-page px-3 py-2 text-xs">{feedHttps}</code>
+              <Copiar texto={feedHttps} />
+            </div>
+            <ul className="mt-3 space-y-1 text-sm text-app-muted">
+              <li>
+                <strong className="text-app-text">Google Calendar:</strong> Outros calendários → + → Subscrever por URL → cola o endereço.
+              </li>
+              <li>
+                <strong className="text-app-text">iPhone / Mac:</strong>{" "}
+                <a href={feedWebcal} className="underline hover:text-app-text">
+                  abre este link
+                </a>{" "}
+                e confirma a subscrição.
+              </li>
+            </ul>
+          </>
+        ) : (
+          <p className="mt-1 text-sm text-app-muted">Define DASHBOARD_PASSWORD para ativar o feed.</p>
+        )}
+      </Card>
 
       {novo ? (
         <EventoModal titulo="Novo evento" fechar={fechar}>
