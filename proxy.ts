@@ -1,4 +1,5 @@
 import { NextResponse, type NextRequest } from "next/server";
+import { supabaseConfigured } from "@/lib/config";
 import { ipDe, permitido } from "@/lib/limites";
 import { CABECALHO_KIND, CABECALHO_MOTIVO } from "@/lib/link-invalido";
 import { verificarToken } from "@/lib/tokens-db";
@@ -16,6 +17,11 @@ export async function proxy(req: NextRequest) {
   // /aluno/entrar, /aluno/historico, … não são tokens: seguem para as páginas.
   if (m[1] === "aluno" && !/^[A-Za-z0-9_-]{20,}$/.test(m[2])) return NextResponse.next();
 
+  const kind = m[1] === "aluno" ? "perfil" : "inscricao";
+  // Sem Supabase (produção ainda sem chaves) não há como validar: fecha com
+  // "não encontrado" em vez de rebentar com 500.
+  if (!supabaseConfigured()) return paginaInvalida(req, kind, "desconhecido");
+
   if (!(await permitido("publico", ipDe(req.headers), 10, 60))) {
     return new NextResponse("Demasiados pedidos. Tenta daqui a um minuto.", {
       status: 429,
@@ -23,17 +29,19 @@ export async function proxy(req: NextRequest) {
     });
   }
 
-  const kind = m[1] === "aluno" ? "perfil" : "inscricao";
   const { avaliacao } = await verificarToken(decodeURIComponent(m[2]), kind);
   if (avaliacao.ok) return NextResponse.next();
+  return paginaInvalida(req, kind, avaliacao.motivo);
+}
 
+function paginaInvalida(req: NextRequest, kind: string, motivo: string): NextResponse {
   const destino = new URL("/api/link-invalido", req.url);
   destino.searchParams.set("kind", kind);
-  destino.searchParams.set("motivo", avaliacao.motivo);
+  destino.searchParams.set("motivo", motivo);
   // Também em cabeçalhos: um `next dev` sem `-H` perde a query da reescrita.
   const headers = new Headers(req.headers);
   headers.set(CABECALHO_KIND, kind);
-  headers.set(CABECALHO_MOTIVO, avaliacao.motivo);
+  headers.set(CABECALHO_MOTIVO, motivo);
   return NextResponse.rewrite(destino, { request: { headers } });
 }
 
