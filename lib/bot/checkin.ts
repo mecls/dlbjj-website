@@ -59,6 +59,13 @@ export function resolverAulasDoDia(
   return { candidatas: hoje, fallback: hoje.length > 0 };
 }
 
+/** As turmas ativas do espaço e do tipo do aluno, por hora (calendário e dias seguidos). */
+export function turmasDoAluno(aluno: AlunoMin, turmas: TurmaRow[]): TurmaRow[] {
+  return turmas
+    .filter((t) => t.ativa && t.local_slug === aluno.local_slug && tipoCombina(aluno, t))
+    .sort((a, b) => a.horario.localeCompare(b.horario));
+}
+
 export interface ProximaAula {
   id: string;
   turma: string;

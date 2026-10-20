@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { proximaAula, resolverAulasDoDia, type TurmaRow } from "@/lib/bot/checkin";
+import { proximaAula, resolverAulasDoDia, turmasDoAluno, type TurmaRow } from "@/lib/bot/checkin";
 
 const t = (chave: string, local_slug: string, turma: string, dias_semana: number[], horario: string, tipo: TurmaRow["tipo"]): TurmaRow => ({
   id: chave,
@@ -86,5 +86,14 @@ describe("proximaAula", () => {
   it("kids em Queluz numa quarta: a próxima é quinta às 18:30", () => {
     const p = proximaAula(kid, TURMAS, new Date("2026-11-04T10:00:00Z"));
     expect(p).toMatchObject({ id: "q-kids-1830", diaNome: "quinta", horario: "18:30" });
+  });
+});
+
+describe("turmasDoAluno", () => {
+  it("ativas, do espaço, do tipo, por hora", () => {
+    const tt = (id: string, local: string, tipo: TurmaRow["tipo"], horario: string, ativa = true): TurmaRow => ({ ...t(id, local, id, [1], horario, tipo), ativa });
+    const ana = { id: "a", nome: "Ana", publico: "adulto" as const, modalidade: "jiu-jitsu" as const, local_slug: "sao-bras" };
+    const r = turmasDoAluno(ana, [tt("mma", "sao-bras", "mma", "18:30"), tt("jj", "sao-bras", "jiu-jitsu", "19:30"), tt("livre", "sao-bras", "misto", "06:00"), tt("q", "queluz", "jiu-jitsu", "08:00"), tt("off", "sao-bras", "jiu-jitsu", "07:00", false)]);
+    expect(r.map((x) => x.id)).toEqual(["livre", "jj"]);
   });
 });
