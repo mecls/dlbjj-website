@@ -64,3 +64,17 @@ describe("Ranking (design §5.4)", () => {
     expect(await (await getAluno("/aluno/ranking?periodo=sempre", ana)).text()).toContain("Inês");
   });
 });
+
+describe("Calendário (design §5.5)", () => {
+  it("mês atual, aula da aluna, eventos próximos com local, mês inválido cai no atual", async () => {
+    const html = await (await getAluno("/aluno/calendario", ana)).text();
+    expect(html).toContain("Calendário");
+    expect(html).toContain("19:30 Jiu-Jitsu");
+    expect(html).toContain("Próximos eventos");
+    expect(html).toContain("Seminário de guarda com convidado · Queluz");
+    expect(html).toContain("Graduação de fim de ano · Toda a academia");
+    const mau = await (await getAluno("/aluno/calendario?mes=abc", ana)).text();
+    expect(mau).toContain("19:30 Jiu-Jitsu");
+    expect((await getAluno("/aluno/calendario?mes=2026-13", ana)).status).toBe(200);
+  });
+});
