@@ -60,16 +60,32 @@ pessoa ──WhatsApp──▶ gateway OpenWA ──webhook──▶ worker (VPS
 | "Olá" (ou o link do site) | Onboarding: nome → para quem → modalidade → espaço → horário → origem → confirmação. Opções como texto numerado; responde com o número. |
 | uma pergunta | O modelo responde SÓ com os factos de `content/site.ts`; preços nunca. Questões sensíveis passam ao Daniel. |
 | `presente` / `cheguei` / `treinei` | Check-in na aula de hoje (pergunta qual, se houver várias; e para quem, se forem irmãos). Aluno inativo volta a ativo. |
-| `perfil` / `a minha ficha` | Link da ficha (7 dias, 3 por dia): faixa, início, presenças, próximas aulas. |
+| `perfil` / `a minha ficha` | Link para entrar na **área de aluno** (7 dias, uso único, 3 por dia). A ficha vive lá: faixa, início, histórico, ranking, calendário. |
 | `parar` / "não quero mais mensagens" | Opt-out para sempre das proativas. Confirmado uma vez. |
+
+### O que o aluno vê na área de aluno (`/aluno`)
+
+Entra em `/aluno/entrar` com o telemóvel: o bot manda um código de 6 dígitos
+pelo WhatsApp (10 minutos, 5 tentativas, 3 por hora, 30 por dia para a
+academia toda; nada sai com o bot desligado ou a sessão em baixo) e a sessão
+fica aberta 90 dias nesse aparelho. Irmãos no mesmo telemóvel trocam de aluno
+no menu do avatar. Vê: **Início** (faixa, membro desde, última aula, aulas no
+mês e desde o início, dias seguidos, posição no ranking, números da academia),
+**Histórico**, **Ranking** (primeiros nomes e faixas de toda a academia; o
+Daniel pode esconder um aluno), **Calendário** (as suas aulas, os eventos, as
+presenças). Nunca vê saúde, encarregado, contactos nem dados de outros. Não há
+chat nem check-in pela web: presença continua a ser `presente` no WhatsApp.
 
 ### O que o Daniel faz no painel (`/painel`)
 
-Inscrições (leads e conversa, assumir/retomar, **Enviar inscrição**) · Alunos
-(ficha, graduações, presenças, anonimizar, novo aluno) · Aulas (ranking e lista
-de presenças por dia) · Reativação (em atraso, Saltar, Enviar agora, toques,
-opt-outs) · Perguntar (só com os dados; nunca inventa) · Agente (interruptor,
-sessão, envios desconhecidos, entradas por processar).
+Início (o agente, alunos ativos, presenças e inscrições do mês, conversas à
+espera, a academia) · Mensagens (leads e conversa, assumir/retomar, **Enviar
+inscrição**; o crachá e o sino acendem quando alguém espera por ele) · Alunos
+(ficha, graduações, presenças, anonimizar, novo aluno, "Aparece no ranking") ·
+Aulas (ranking e lista de presenças por dia) · Eventos (seminários,
+graduações…; os alunos veem-nos no calendário) · Reativação (em atraso, Saltar,
+Enviar agora, toques, opt-outs) · Perguntar (só com os dados; nunca inventa) ·
+Agente (interruptor, sessão, envios desconhecidos, entradas por processar).
 
 ### O que corre sozinho
 
@@ -177,6 +193,9 @@ content/site.ts                      ← horários e locais (fonte única; seed:
 lib/bot/handle-inbound.ts            ← a ordem: opt-out → interruptor → check-in/ficha → regresso → guião
 lib/bot/flow.ts · nlu.ts · render.ts · resolve.ts   ← guião, modelo, opções numeradas
 lib/bot/checkin*.ts · perfil.ts · optout.ts         ← utilidades do aluno
+lib/aluno/*                          ← área do aluno: códigos, sessões, estatísticas puras, consultas
+lib/eventos.ts · lib/painel/*        ← eventos; números do painel e conversas à espera
+components/app/*                     ← a moldura partilhada (barra lateral, cartões, mapa de calor, faixa)
 lib/bot/outbound.ts                  ← a ÚNICA porta de saída (fila)
 lib/inscricao/*                      ← formulário, validação, criação do aluno
 lib/reativacao/*                     ← regras R1–R5, execução, resposta
@@ -184,7 +203,8 @@ lib/perguntar/*                      ← catálogo, ferramentas, modelo, respost
 lib/anonimizar.ts · limites.ts · tokens*.ts · tempo.ts
 proxy.ts                             ← tokens e limite nas páginas públicas
 app/painel/*  app/api/painel/*       ← painel e as suas ações (POST + 303)
-app/inscricao/[token]  app/aluno/[token]           ← páginas públicas
+app/inscricao/[token]  app/aluno/[token]           ← páginas públicas (o link do bot confirma e entra)
+app/aluno/entrar  app/aluno/(area)/*  app/api/aluno/*   ← login por código e a área do aluno
 app/api/agent/inbound  app/api/cron/*              ← worker → app; crons da Vercel
 worker/src/*                         ← gateway, webhook, drenagem, passagem de mão
 docker/*                             ← compose e runbook da VPS

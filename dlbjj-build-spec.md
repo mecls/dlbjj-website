@@ -587,6 +587,8 @@ Deferred from the review as minor (recorded in the ledger, not fixed): `last_mes
 
 Not built because §2 excluded it: payments, Instagram, native app, capacity/booking, audio transcription, instructor roles, Cloud API fallback, write access from the chat.
 
+**2026-10-20 — Área do aluno e painel novo.** Built after this spec, from its own design document: `docs/superpowers/specs/2026-10-20-area-do-aluno-design.md` (login by phone + WhatsApp code, 90-day sessions, Início/Histórico/Ranking/Calendário, events, the painel rebuilt on a shared shell with a dashboard and conversations under `/painel/mensagens`, migration `005`). The `perfil` link became single-use with a confirm page; §3 F's "ficha" is now that area. Everything else in this spec still holds.
+
 ## 17. Definition of Done
 
 > `npm run verify` exits 0 on a clean checkout with `supabase start` running and no network access to Ollama or WhatsApp (fakes only); every scenario AC-1 to AC-12 in §13 passes inside that run; `docker compose -f docker/docker-compose.yml config` validates and the runbook's steps are the only thing between a fresh clone on the VPS and a `ready` session; and the only remaining manual steps, listed at the top of `AGENTE-WHATSAPP.md`, are creating the Supabase project, pasting env values into Vercel and `docker/.env`, and reading the pairing code on Daniel's phone.

@@ -62,7 +62,9 @@ tudo no ramo `agente-openwa`, **por publicar**. Nada em produção mudou ainda.
 ## Fase 5 — Primeira conversa real · **Miguel**
 
 - [ ] De um telemóvel teu, "Olá" para o 925 797 266; inscrição até ao fim.
-- [ ] `presente` de um aluno de teste; `perfil`; `parar`.
+- [ ] `presente` de um aluno de teste; `perfil` (o link abre "Entrar como …" e entra); `parar`.
+- [ ] Entrar em `/aluno/entrar` com o teu número: o código chega pelo WhatsApp; ver
+      Início, Histórico, Ranking, Calendário no telemóvel.
 - [ ] O Daniel responde pelo telemóvel a essa conversa → o painel mostra
       "Daniel respondeu pelo telemóvel" e o bot cala-se.
 - [ ] `/painel/agente` com a sessão ligada e "visto há N s".

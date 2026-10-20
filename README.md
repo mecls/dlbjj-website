@@ -110,9 +110,11 @@ Para repor uma delas: voltar a importá-la e a renderizá-la em `app/page.tsx`, 
 
 ## Agente de WhatsApp, inscrições e alunos
 
-O site tem agora um agente de WhatsApp (onboarding, check-in, ficha do aluno,
-reativação), um formulário de inscrição por link e um painel (`/painel`) com
-alunos, aulas, reativação e um chat que responde só com os dados. A app nunca
+O site tem agora um agente de WhatsApp (onboarding, check-in, reativação), um
+formulário de inscrição por link, uma **área de aluno** (`/aluno`: entra com o
+telemóvel e um código pelo WhatsApp; faixa, histórico, ranking, calendário) e um
+painel (`/painel`) com um início de números, mensagens, alunos, aulas, eventos,
+reativação e um chat que responde só com os dados. A app nunca
 fala com o WhatsApp: escreve numa fila e um worker numa VPS envia pelo gateway
 OpenWA. Tudo explicado em **`AGENTE-WHATSAPP.md`**; a spec em
 `dlbjj-build-spec.md`; a VPS em `docker/README.md`; o estado em `docs/PRE-VOO.md`.
