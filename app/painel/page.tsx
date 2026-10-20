@@ -1,5 +1,6 @@
 import Link from "next/link";
 import { requireAuth } from "@/lib/auth";
+import { supabaseConfigured } from "@/lib/config";
 import { serviceClient } from "@/lib/supabase/service";
 import { Card, StatusBadge, timeAgo } from "@/components/painel/ui";
 import { MODALIDADE_LABEL } from "@/lib/bot/flow";
@@ -9,13 +10,6 @@ import { localPorSlug } from "@/content/site";
 const ESTADOS: LeadStatus[] = ["novo", "em_progresso", "concluido", "inscrito", "humano", "perdido", "descartado"];
 
 export const dynamic = "force-dynamic";
-
-function supabaseConfigured() {
-  return Boolean(
-    process.env.NEXT_PUBLIC_SUPABASE_URL &&
-      process.env.SUPABASE_SERVICE_ROLE_KEY,
-  );
-}
 
 export default async function PainelPage({ searchParams }: { searchParams?: Promise<{ estado?: string; q?: string }> }) {
   await requireAuth();

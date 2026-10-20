@@ -3,6 +3,8 @@ import { createHash } from "node:crypto";
 import { serviceClient } from "@/lib/supabase/service";
 import { hojeLisboa, somarDias } from "@/lib/tempo";
 import { cancelarProativasPendentes } from "@/lib/reativacao/resposta";
+import { apagarCodigosDe } from "@/lib/aluno/codigos";
+import { terminarSessoesDe } from "@/lib/aluno/sessao";
 
 /**
  * Anonimização (spec §6.11): nunca se apaga; substitui-se o que identifica a
@@ -36,6 +38,8 @@ export async function anonimizarAluno(id: string): Promise<void> {
 
   await db.from("dlbjj_alunos").update({ nome: "Aluno anonimizado", phone: anon(phone), estado: "anonimizado", ...CAMPOS_NULOS }).eq("id", id);
   await db.from("dlbjj_tokens").update({ revogado_em: new Date().toISOString() }).eq("aluno_id", id).is("revogado_em", null);
+  await terminarSessoesDe(id);
+  if (!partilhado) await apagarCodigosDe(phone); // o irmão ainda ativo pode continuar a entrar
 
   if (!partilhado) await anonimizarTelefone(phone);
 }

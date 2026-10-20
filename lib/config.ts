@@ -30,6 +30,11 @@ export const APP = {
   cronSecret: () => process.env.CRON_SECRET || "",
 };
 
+/** As duas chaves sem as quais nada do lado dos dados funciona. */
+export function supabaseConfigured(): boolean {
+  return Boolean(process.env.NEXT_PUBLIC_SUPABASE_URL && process.env.SUPABASE_SERVICE_ROLE_KEY);
+}
+
 export function requireEnv(name: string): string {
   const v = process.env[name];
   if (!v) throw new Error(`Missing required env var: ${name}`);

@@ -1,11 +1,14 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { createHash } from "node:crypto";
 import { anonimizarAntigos } from "@/lib/anonimizar";
+import { emitirCodigo } from "@/lib/aluno/codigos";
+import { criarSessao, lerSessao } from "@/lib/aluno/sessao";
 import { db, FIXTURES, resetDb } from "../helpers/db";
 
 const sb = db();
 const PHONE = "351950000001";
 let alunoId: string;
+let sessao: string;
 
 beforeAll(async () => {
   resetDb();
@@ -22,6 +25,8 @@ beforeAll(async () => {
   await sb.from("dlbjj_leads").insert({ phone: PHONE, name: "Antigo Silva", step: "concluido", status: "inscrito", aluno_id: alunoId, last_message_at: "2024-09-03T10:00:00Z" });
   await sb.from("dlbjj_mensagens").insert([{ phone: PHONE, direction: "in", role: "lead", body: "olá, sou o antigo", created_at: "2024-09-03T10:00:00Z" }, { phone: PHONE, direction: "out", role: "bot", body: "olá antigo", created_at: "2024-09-03T10:00:05Z" }]);
   await sb.from("dlbjj_opt_outs").insert({ phone_hash: createHash("sha256").update(PHONE).digest("hex"), motivo: "parar" });
+  sessao = await criarSessao(PHONE, alunoId);
+  await emitirCodigo(PHONE);
 });
 
 describe("anonimização mensal (AC-12)", () => {
@@ -43,6 +48,9 @@ describe("anonimização mensal (AC-12)", () => {
     expect(opt).not.toBeNull();
     const { data: lead } = await sb.from("dlbjj_leads").select("name,phone").eq("aluno_id", alunoId).single();
     expect(lead).toEqual({ name: "Lead anonimizada", phone: a!.phone });
+    expect(await lerSessao(sessao)).toBeNull(); // a sessão da área do aluno terminou
+    const { count: codigos } = await sb.from("dlbjj_codigos_login").select("*", { count: "exact", head: true }).eq("phone", PHONE);
+    expect(codigos).toBe(0);
   });
 
   it("não toca em alunos ativos nem em quem treinou há pouco", async () => {
