@@ -25,6 +25,16 @@
   --color-dl-ash: #a8a2a3;
   --color-dl-steel: #6b6465;
 
+  /* -- Área do aluno e painel (fundo branco, estilo "app") ---------------- */
+  --color-app-bg: #ffffff;
+  --color-app-page: #fafafa;
+  --color-app-border: #e6e8ec;
+  --color-app-text: #1f2434;
+  --color-app-muted: #6b7280;
+  --color-app-soft: #f1f3f5;
+  --color-app-accent: #ed1c24;
+  --color-app-icon: #3b4256;
+
   /* -- Tipografia -------------------------------------------------------- */
   --font-display: var(--font-barlow-condensed), "Arial Narrow", sans-serif;
   --font-sans: var(--font-inter), system-ui, sans-serif;

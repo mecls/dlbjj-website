@@ -1,47 +1,60 @@
 import type { Metadata } from "next";
-import Link from "next/link";
+import { AppShell, type NavItem, type NavSection } from "@/components/app/shell";
 import { RealtimeRefresher } from "@/components/painel/realtime-refresher";
 import { logoutAction } from "@/app/painel/actions";
+import { isAuthed } from "@/lib/auth";
 
 export const metadata: Metadata = {
-  title: "Painel — Onboarding DL-BJJ",
+  title: "Painel — DL-BJJ",
   robots: { index: false, follow: false },
 };
 
-export default function PainelLayout({
-  children,
-}: {
-  children: React.ReactNode;
-}) {
+const NAV: NavSection[] = [
+  { items: [{ href: "/painel", label: "Início", icone: "inicio", exact: true }] },
+  {
+    caption: "Academia",
+    items: [
+      { href: "/painel/mensagens", label: "Mensagens", icone: "mensagens" },
+      { href: "/painel/alunos", label: "Alunos", icone: "alunos" },
+      { href: "/painel/aulas", label: "Aulas", icone: "aulas" },
+      { href: "/painel/eventos", label: "Eventos", icone: "eventos" },
+      { href: "/painel/reativacao", label: "Reativação", icone: "reativacao" },
+    ],
+  },
+  {
+    caption: "Ferramentas",
+    items: [
+      { href: "/painel/perguntar", label: "Perguntar", icone: "perguntar" },
+      { href: "/painel/agente", label: "Agente", icone: "agente" },
+    ],
+  },
+];
+
+const RODAPE: NavItem[] = [{ href: "/", label: "Site", icone: "site" }];
+
+export default async function PainelLayout({ children }: { children: React.ReactNode }) {
+  const authed = await isAuthed();
+  if (!authed) {
+    return <div className="min-h-screen bg-app-page text-app-text [color-scheme:light]">{children}</div>;
+  }
   return (
-    <div className="min-h-screen bg-neutral-50 text-neutral-900">
+    <>
       <RealtimeRefresher />
-      <header className="sticky top-0 z-10 border-b border-neutral-200 bg-white/90 backdrop-blur">
-        <div className="mx-auto flex max-w-5xl items-center gap-4 px-4 py-3">
-          <Link href="/painel" className="flex items-center gap-2">
-            <span className="bg-dl-red rounded-md px-2 py-1 text-sm font-bold text-white">
-              DL-BJJ
-            </span>
-            <span className="text-sm font-semibold text-neutral-700">
-              Painel
-            </span>
-          </Link>
-          <nav className="flex gap-3 text-sm text-neutral-600">
-            <Link href="/painel" className="hover:text-neutral-900">Inscrições</Link>
-            <Link href="/painel/alunos" className="hover:text-neutral-900">Alunos</Link>
-            <Link href="/painel/aulas" className="hover:text-neutral-900">Aulas</Link>
-            <Link href="/painel/reativacao" className="hover:text-neutral-900">Reativação</Link>
-            <Link href="/painel/perguntar" className="hover:text-neutral-900">Perguntar</Link>
-            <Link href="/painel/agente" className="hover:text-neutral-900">Agente</Link>
-          </nav>
-          <form action={logoutAction} className="ml-auto">
-            <button className="text-xs text-neutral-500 hover:text-neutral-800">
-              Sair
-            </button>
-          </form>
-        </div>
-      </header>
-      <main className="mx-auto max-w-5xl px-4 py-6">{children}</main>
-    </div>
+      <AppShell
+        nav={NAV}
+        rodape={RODAPE}
+        utilizador={{
+          nome: "Daniel",
+          iniciais: "DL",
+          menu: (
+            <form action={logoutAction}>
+              <button className="w-full rounded-lg px-2 py-1.5 text-left text-app-text hover:bg-app-soft">Sair</button>
+            </form>
+          ),
+        }}
+      >
+        {children}
+      </AppShell>
+    </>
   );
 }

@@ -1,24 +1,8 @@
 import { cn } from "@/lib/utils";
 import { STATUS_LABEL, type LeadStatus } from "@/lib/bot/types";
 
-export function Card({
-  className,
-  children,
-}: {
-  className?: string;
-  children: React.ReactNode;
-}) {
-  return (
-    <div
-      className={cn(
-        "rounded-xl border border-neutral-200 bg-white shadow-sm",
-        className,
-      )}
-    >
-      {children}
-    </div>
-  );
-}
+/** Os primitivos vivem em components/app/ui (partilhados com a área do aluno); aqui ficam os do painel. */
+export * from "@/components/app/ui";
 
 const STATUS_STYLE: Record<LeadStatus, string> = {
   novo: "bg-sky-100 text-sky-800",
@@ -26,47 +10,12 @@ const STATUS_STYLE: Record<LeadStatus, string> = {
   concluido: "bg-emerald-100 text-emerald-800",
   inscrito: "bg-emerald-200 text-emerald-900",
   humano: "bg-red-100 text-red-800",
-  perdido: "bg-neutral-200 text-neutral-600",
-  descartado: "bg-neutral-100 text-neutral-500",
+  perdido: "bg-app-soft text-app-muted",
+  descartado: "bg-app-soft text-app-muted",
 };
 
 export function StatusBadge({ status }: { status: LeadStatus }) {
-  return (
-    <span
-      className={cn(
-        "inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium",
-        STATUS_STYLE[status],
-      )}
-    >
-      {STATUS_LABEL[status]}
-    </span>
-  );
-}
-
-export function Button({
-  className,
-  variant = "default",
-  ...props
-}: React.ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "default" | "outline" | "danger" | "ghost";
-}) {
-  const variants = {
-    default: "bg-dl-red text-white hover:bg-dl-red-hover",
-    outline:
-      "border border-neutral-300 bg-white text-neutral-700 hover:bg-neutral-50",
-    danger: "bg-red-700 text-white hover:bg-red-800",
-    ghost: "text-neutral-600 hover:bg-neutral-100",
-  };
-  return (
-    <button
-      className={cn(
-        "inline-flex items-center justify-center gap-1.5 rounded-lg px-3 py-1.5 text-sm font-medium transition disabled:cursor-not-allowed disabled:opacity-50",
-        variants[variant],
-        className,
-      )}
-      {...props}
-    />
-  );
+  return <span className={cn("inline-flex items-center rounded-full px-2 py-0.5 text-xs font-medium", STATUS_STYLE[status])}>{STATUS_LABEL[status]}</span>;
 }
 
 export function timeAgo(iso: string): string {
