@@ -11,7 +11,7 @@ describe("icsDe", () => {
     expect(ics).toContain("DTEND;VALUE=DATE:20261109");
     expect(ics).toContain("DTSTART:20260710T180000Z"); // 19:00 em Lisboa (verão) = 18:00Z
     expect(ics).toContain("DTEND:20260710T190000Z");
-    expect(ics).toContain("SUMMARY:Open Mat\\, NoGi\; livre");
+    expect(ics).toContain("SUMMARY:Open Mat\\, NoGi\\; livre");
     expect(ics).toContain("DESCRIPTION:Traz rashguard\\nE água");
     expect(ics).toContain("LOCATION:São Brás");
     expect(ics).toContain("LOCATION:Academia DL-BJJ");

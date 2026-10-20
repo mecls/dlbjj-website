@@ -27,6 +27,8 @@ beforeAll(async () => {
   await sb.from("dlbjj_opt_outs").insert({ phone_hash: createHash("sha256").update(PHONE).digest("hex"), motivo: "parar" });
   sessao = await criarSessao(PHONE, alunoId);
   await emitirCodigo(PHONE);
+  const { data: lead } = await sb.from("dlbjj_leads").select("id").eq("phone", PHONE).single();
+  await sb.from("dlbjj_resumos").insert({ lead_id: lead!.id, situacao: "A Maria quer inscrever o filho", quer: "Inscrever o filho", mensagens: 2, ate: "2024-09-03T10:00:05Z" });
 });
 
 describe("anonimização mensal (AC-12)", () => {
@@ -49,6 +51,8 @@ describe("anonimização mensal (AC-12)", () => {
     const { data: lead } = await sb.from("dlbjj_leads").select("name,phone").eq("aluno_id", alunoId).single();
     expect(lead).toEqual({ name: "Lead anonimizada", phone: a!.phone });
     expect(await lerSessao(sessao)).toBeNull(); // a sessão da área do aluno terminou
+    const { count: resumos } = await sb.from("dlbjj_resumos").select("*", { count: "exact", head: true }).eq("lead_id", (await sb.from("dlbjj_leads").select("id").eq("aluno_id", alunoId).single()).data!.id);
+    expect(resumos).toBe(0); // o resumo escrito pelo modelo sobre a pessoa desapareceu
     const { count: codigos } = await sb.from("dlbjj_codigos_login").select("*", { count: "exact", head: true }).eq("phone", PHONE);
     expect(codigos).toBe(0);
   });

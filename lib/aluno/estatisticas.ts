@@ -139,6 +139,7 @@ export interface EventoCalendario {
   hora: string | null;
   local_slug: string | null;
   descricao?: string | null;
+  cancelado_em?: string | null;
 }
 
 export interface CelulaCalendario {

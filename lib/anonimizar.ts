@@ -59,7 +59,9 @@ async function anonimizarTelefone(phone: string): Promise<void> {
   await db.from("dlbjj_leads").update({ name: "Lead anonimizada", phone: a, collected: {}, human_reason: null }).eq("phone", phone);
   await db.from("dlbjj_fila_saida").update({ corpo: "[anonimizado]", phone: a }).eq("phone", phone);
   await db.from("dlbjj_toques").update({ phone: a }).eq("phone", phone);
-  await db.from("dlbjj_tokens").update({ revogado_em: new Date().toISOString() }).in("lead_id", (await db.from("dlbjj_leads").select("id").eq("phone", a)).data?.map((l) => l.id) ?? []).is("revogado_em", null);
+  const ids = (await db.from("dlbjj_leads").select("id").eq("phone", a)).data?.map((l) => l.id) ?? [];
+  await db.from("dlbjj_tokens").update({ revogado_em: new Date().toISOString() }).in("lead_id", ids).is("revogado_em", null);
+  if (ids.length) await db.from("dlbjj_resumos").delete().in("lead_id", ids); // o resumo escrito pelo modelo é prosa sobre a pessoa
 }
 
 /** O cron mensal: 24 meses sem contacto nem presença, e não ativo. */

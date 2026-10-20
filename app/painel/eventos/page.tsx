@@ -5,11 +5,11 @@ import { Icone } from "@/components/app/icones";
 import { EventoModal } from "@/components/painel/evento-modal";
 import { Copiar } from "@/components/painel/copiar";
 import { APP } from "@/lib/config";
-import { chaveIcs } from "@/lib/painel/ics-chave";
+import { obterChaveIcs } from "@/lib/painel/ics-chave";
 import { requireAuth } from "@/lib/auth";
 import { mesAnterior, mesDeCalendario, mesSeguinte, mesValido, type CelulaCalendario } from "@/lib/aluno/estatisticas";
 import { DIAS_CURTOS, MESES, diaCurto } from "@/lib/datas-pt";
-import { eventoPorId, listarEventos, proximosEventos, type Evento } from "@/lib/eventos";
+import { eventoPorId, listarEventosDoPainel, proximosEventos, type Evento } from "@/lib/eventos";
 import { hojeLisboa, somarDias } from "@/lib/tempo";
 import { cn } from "@/lib/utils";
 
@@ -61,7 +61,12 @@ function Chips({ c, mes }: { c: CelulaCalendario; mes: string }) {
   return (
     <>
       {c.eventos.map((e) => (
-        <Link key={e.id} href={`/painel/eventos?mes=${mes}&editar=${e.id}`} className="block truncate rounded border border-app-accent px-1.5 py-0.5 text-[11px] leading-4 text-app-accent hover:bg-red-50" title={e.titulo}>
+        <Link
+          key={e.id}
+          href={`/painel/eventos?mes=${mes}&editar=${e.id}`}
+          className={cn("block truncate rounded border px-1.5 py-0.5 text-[11px] leading-4", e.cancelado_em ? "border-app-border text-app-muted line-through" : "border-app-accent text-app-accent hover:bg-red-50")}
+          title={e.cancelado_em ? `${e.titulo} (cancelado)` : e.titulo}
+        >
           {e.hora ? `${e.hora} ` : ""}
           {e.titulo}
         </Link>
@@ -80,15 +85,15 @@ export default async function EventosPage({ searchParams }: { searchParams?: Pro
   const primeiro = `${mes}-01`;
   const ultimo = somarDias(`${mesSeguinte(mes)}-01`, -1);
   const novo = sp.novo && /^\d{4}-\d{2}-\d{2}$/.test(sp.novo) ? sp.novo : null;
-  const [eventos, proximos, aEditar] = await Promise.all([
-    listarEventos(somarDias(primeiro, -7), somarDias(ultimo, 7)),
+  const [eventos, proximos, aEditar, chave] = await Promise.all([
+    listarEventosDoPainel(somarDias(primeiro, -7), somarDias(ultimo, 7)),
     proximosEventos(hoje, 10),
     sp.editar ? eventoPorId(sp.editar) : Promise.resolve(null),
+    obterChaveIcs(),
   ]);
   const semanas = mesDeCalendario(mes, [], eventos, [], hoje);
   const dias = semanas.flat().filter((c) => c.noMes && (c.hoje || c.eventos.length > 0));
   const fechar = `/painel/eventos?mes=${mes}`;
-  const chave = chaveIcs();
   const feedHttps = chave ? `${APP.baseUrl()}/api/painel/eventos.ics?chave=${chave}` : null;
   const feedWebcal = feedHttps ? feedHttps.replace(/^https?:\/\//, "webcal://") : null;
 
@@ -168,7 +173,7 @@ export default async function EventosPage({ searchParams }: { searchParams?: Pro
         <h2 className="font-semibold">Sincronizar com o teu calendário</h2>
         {feedHttps && feedWebcal ? (
           <>
-            <p className="mt-1 text-sm text-app-muted">Subscreve uma vez; os eventos novos e as alterações aparecem sozinhos. É só de leitura: o que mudares lá não volta para aqui.</p>
+            <p className="mt-1 text-sm text-app-muted">Subscreve uma vez; os eventos novos e as alterações aparecem sozinhos. É só de leitura: o que mudares lá não volta para aqui. Se o endereço se perder, «Gerar nova chave» desliga o antigo.</p>
             <div className="mt-3 flex items-center gap-2">
               <code className="min-w-0 flex-1 truncate rounded-lg border border-app-border bg-app-page px-3 py-2 text-xs">{feedHttps}</code>
               <Copiar texto={feedHttps} />
@@ -185,6 +190,9 @@ export default async function EventosPage({ searchParams }: { searchParams?: Pro
                 e confirma a subscrição.
               </li>
             </ul>
+            <form method="post" action="/api/painel/eventos/ics-chave" className="mt-3">
+              <button className="rounded-lg border border-app-border px-3 py-1.5 text-sm font-medium hover:bg-app-soft">Gerar nova chave</button>
+            </form>
           </>
         ) : (
           <p className="mt-1 text-sm text-app-muted">Define DASHBOARD_PASSWORD para ativar o feed.</p>

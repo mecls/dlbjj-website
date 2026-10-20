@@ -37,6 +37,9 @@ describe("Painel — eventos (ajustes §2.5)", () => {
     html = await (await getPainel(`/painel/eventos?mes=${mes}&editar=${data!.id}`)).text();
     expect(html).toContain("Este evento foi cancelado.");
     expect(html).not.toContain("Cancelar evento");
+    html = await (await getPainel(`/painel/eventos?mes=${mes}`)).text();
+    expect(html).toContain("Treino aberto a todos"); // um cancelado continua visível ao Daniel, riscado
+    expect(html).toContain("line-through");
     expect(await (await getAluno("/aluno/calendario", ana)).text()).not.toContain("Treino aberto");
   }, 90_000);
   it("título vazio reabre o modal com o erro", async () => {
@@ -49,8 +52,8 @@ describe("Painel — eventos (ajustes §2.5)", () => {
     expect((await postPainel("/api/painel/eventos", { titulo: "x", dia: "2026-12-01" }, false)).status).toBe(401);
   });
   it("o feed ICS serve os eventos com a chave e recusa sem ela", async () => {
-    const { chaveIcs } = await import("@/lib/painel/ics-chave");
-    const r = await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=${chaveIcs()}`);
+    const { obterChaveIcs } = await import("@/lib/painel/ics-chave");
+    const r = await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=${await obterChaveIcs()}`);
     expect(r.status).toBe(200);
     expect(r.headers.get("content-type")).toContain("text/calendar");
     const ics = await r.text();
@@ -59,10 +62,17 @@ describe("Painel — eventos (ajustes §2.5)", () => {
     expect((await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=errada`)).status).toBe(401);
     expect((await fetch(`${E2E_URL}/api/painel/eventos.ics`)).status).toBe(401);
   });
-  it("a página mostra o endereço do feed", async () => {
+  it("a página mostra o endereço do feed e 'Gerar nova chave' roda-a", async () => {
+    const { obterChaveIcs } = await import("@/lib/painel/ics-chave");
+    const antiga = await obterChaveIcs();
     const html = await (await getPainel("/painel/eventos")).text();
     expect(html).toContain("Sincronizar com o teu calendário");
-    expect(html).toContain("/api/painel/eventos.ics?chave=");
+    expect(html).toContain(`/api/painel/eventos.ics?chave=${antiga}`);
     expect(html).toContain("webcal://");
+    expect(html).toContain("Gerar nova chave");
+    const r = await postPainel("/api/painel/eventos/ics-chave", {});
+    expect(r.status).toBe(303);
+    expect((await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=${antiga}`)).status).toBe(401);
+    expect((await fetch(`${E2E_URL}/api/painel/eventos.ics?chave=${await obterChaveIcs()}`)).status).toBe(200);
   });
 });

@@ -1,6 +1,6 @@
 import { beforeAll, describe, expect, it } from "vitest";
 import { db, FIXTURES, resetDb } from "../helpers/db";
-import { cancelarEvento, criarEvento, editarEvento, eventosDoPainel, listarEventos, proximosEventos } from "@/lib/eventos";
+import { cancelarEvento, criarEvento, editarEvento, listarEventos, listarEventosDoPainel, proximosEventos } from "@/lib/eventos";
 import { hojeLisboa, somarDias } from "@/lib/tempo";
 
 const sb = db();
@@ -19,6 +19,6 @@ describe("eventos", () => {
     expect((await proximosEventos(hoje, 10)).map((e) => e.id)).toEqual(expect.arrayContaining([id, FIXTURES.eventos.seminario.id, FIXTURES.eventos.graduacao.id]));
     await cancelarEvento(id);
     expect((await proximosEventos(hoje, 10)).map((e) => e.id)).not.toContain(id);
-    expect((await eventosDoPainel(hoje)).proximos.find((e) => e.id === id)?.cancelado_em).toBeTruthy();
+    expect((await listarEventosDoPainel(hoje, somarDias(hoje, 7))).find((e) => e.id === id)?.cancelado_em).toBeTruthy();
   });
 });

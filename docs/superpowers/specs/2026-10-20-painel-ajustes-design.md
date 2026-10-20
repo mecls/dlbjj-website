@@ -115,7 +115,9 @@ is a rail on the right.
   `mes` so the user lands on the month they were on. Validation errors reopen
   the modal with the message (`?erro=…&novo=…` / `&editar=…`).
 - "Próximos" list stays under the calendar (next 10). "Passados (90 dias)" goes;
-  the month navigation covers it.
+  the month navigation covers it. Cancelled events stay on the painel's month
+  grid, struck through (review finding: a mis-click must leave a trace); the
+  student calendar never shows them.
 - **Calendar feed** (`§sync`): `GET /api/painel/eventos.ics?chave=<chave>` returns
   `text/calendar` with every non-cancelled event: `UID <id>@dlbjj.org`, `DTSTART`
   as `VALUE=DATE` when there is no hour, else local time with
@@ -126,15 +128,20 @@ is a rail on the right.
   `DTSTAMP`, `X-WR-CALNAME: DL-BJJ — eventos`. Pure `icsDe(eventos, agora)` in
   `lib/eventos-ics.ts`, unit-tested (line folding not needed under 75 chars;
   escape `,` `;` `\n`; CRLF line endings).
-  - `chave` = `HMAC-SHA256(DASHBOARD_PASSWORD, "dlbjj-eventos-ics")` hex
-    (`lib/painel/ics-chave.ts`, timing-safe compare). No cookie: Google fetches
-    the URL itself. Wrong/missing key → 401. No `DASHBOARD_PASSWORD` → 503 in
-    production, 401 in dev (fail closed, like the painel). Rate limit 60/min/IP.
+  - `chave` = a random 32-byte secret stored in `dlbjj_settings.ics_chave`,
+    created on first use and rotated with a "Gerar nova chave" button
+    (`lib/painel/ics-chave.ts`, byte-length-safe timing-safe compare). It is
+    **not** derived from the painel password (review finding: the feed URL
+    lives in Google, Apple Calendar, clipboards and request logs, and a fast
+    hash of the password would make it an offline attack on the only painel
+    credential). No cookie: Google fetches the URL itself. Wrong/missing key →
+    401. No `DASHBOARD_PASSWORD` → 503 in production, 401 in dev (fail closed,
+    like the painel). Rate limit 60/min/IP.
   - The Eventos page shows a card **"Sincronizar com o teu calendário"** with the
     full `webcal://` and `https://` URLs (built from `APP_BASE_URL`), a copy
     button, and two-line instructions: Google Calendar → "Outros calendários →
     Subscrever por URL"; iPhone/Mac → open the `webcal://` link. One-way: edits
-    in Google do not come back. Changing `DASHBOARD_PASSWORD` rotates the key.
+    in Google do not come back. "Gerar nova chave" rotates the key.
 
 ### 2.6 Perguntar — removed for now
 - Delete `app/painel/perguntar/page.tsx`, `app/api/painel/perguntar/route.ts`,

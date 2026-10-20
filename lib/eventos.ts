@@ -62,14 +62,10 @@ export async function proximosEventos(hoje: string, n: number): Promise<Evento[]
   return normalizar(data);
 }
 
-/** Para o painel: os próximos (cancelados incluídos, para o Daniel os ver riscados) e os últimos 90 dias. */
-export async function eventosDoPainel(hoje: string): Promise<{ proximos: Evento[]; passados: Evento[] }> {
-  const db = serviceClient();
-  const [{ data: proximos }, { data: passados }] = await Promise.all([
-    db.from(TABELA).select(COLUNAS).gte("dia", hoje).order("dia").order("hora", { nullsFirst: true }),
-    db.from(TABELA).select(COLUNAS).lt("dia", hoje).gte("dia", somarDias(hoje, -90)).order("dia", { ascending: false }).order("hora", { nullsFirst: true }),
-  ]);
-  return { proximos: normalizar(proximos), passados: normalizar(passados) };
+/** Para o calendário do painel: o intervalo inteiro, cancelados incluídos (o Daniel vê-os riscados). */
+export async function listarEventosDoPainel(desde: string, ate: string): Promise<Evento[]> {
+  const { data } = await serviceClient().from(TABELA).select(COLUNAS).gte("dia", desde).lte("dia", ate).order("dia").order("hora", { nullsFirst: true });
+  return normalizar(data);
 }
 
 export async function eventoPorId(id: string): Promise<Evento | null> {
