@@ -119,14 +119,16 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
 | `--color-app-icon` | `#3b4256` | outline icons in cards and nav |
 
 - Font: Inter (`font-sans`). Sidebar 300px on ≥1024px, white, `border-r`.
-  Logo `public/brand/wordmark.png` centred at the top, ~36px tall. Nav items
+  Logo `public/brand/logo.png` (black on white; the wordmark has white
+  lettering and vanishes on white) centred at the top, 64px tall. Nav items
   40px tall, `rounded-lg`, icon 18px (lucide, stroke 1.75) + 15px label; active
   item has `bg-app-soft`. Section captions ("TREINO", "ACADEMIA") 11px uppercase
   `tracking-wider text-app-muted`, 24px above. Bottom of the sidebar holds the
   secondary links (WhatsApp da academia, Sair for the student; Site, Sair for
   Daniel).
-- Top bar 72px, `border-b`, right-aligned: bell icon with a red dot when there
-  is something (see §6/§7), then a 36px round avatar with the person's initials
+- Top bar 72px, `border-b`, right-aligned: on Daniel's shell a bell icon with a
+  red dot when something waits (§6); the student shell has no bell (nothing to
+  notify in v1). Then a 36px round avatar with the person's initials
   on `bg-app-soft`. Clicking the avatar opens a small menu: name, sibling switch
   (student, when applicable), Sair.
 - Content: `max-w-[1360px]`, padding 48px on desktop, 16px on phones. H1 28px
@@ -160,9 +162,14 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
   "Enviar código". POST `/api/aluno/codigo`:
   - normalise with the existing `normalizarTelefone` (9 digits → `351…`);
   - rate limits via `permitido()`: 3 codes per phone per hour, 10 requests per
-    IP per 15 minutes → 429 rendered as "Demasiados pedidos. Tenta mais tarde.";
+    IP per 15 minutes, and 30 codes per day for the whole academy (a ban
+    guard: codes skip the proactive ceiling, so they get their own) → 303 back
+    with "Demasiados pedidos. Tenta mais tarde.";
   - if `bot_enabled` is `off`, show "O envio de códigos está desligado de
-    momento. Fala com a academia." and stop;
+    momento. Fala com a academia." and stop; if `dlbjj_sessao` says `caido` or
+    was last seen more than 10 minutes ago, show "O WhatsApp da academia está em
+    baixo de momento. Tenta mais tarde." and stop (a code delivered an hour late
+    is useless; no row → dev/first run → proceed);
   - if the phone has at least one student with estado `ativo` or `inativo`:
     create a 6-digit code (crypto random), store **its sha256** in
     `dlbjj_codigos_login` (expires in 10 minutes, `tentativas = 0`), and queue
@@ -198,16 +205,25 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
   `/aluno/entrar`.
 - **The WhatsApp `perfil` keyword** keeps working and becomes the second door:
   the message changes to "Aqui tens o link para entrares na tua área de aluno,
-  Ana: <url>/aluno/<token> (vale 7 dias)". Opening a valid link now **marks the
-  token used, creates the same 90-day session and 303s to `/aluno`**. The
-  3-per-day limit stays. `proxy.ts` keeps gating that path, with the matcher
-  tightened to real tokens — `/aluno/:token([A-Za-z0-9_-]{20,})` — so
-  `/aluno/entrar`, `/aluno/historico` etc. are never treated as tokens.
+  Ana: <url>/aluno/<token> (vale 7 dias)". Opening a valid link shows a small
+  page "Entrar como Ana" with one button; that POST (`/api/aluno/link`)
+  **claims the token atomically (single use), creates the same 90-day session
+  and 303s to `/aluno`**. A GET never consumes it, so a link preview fetched by
+  the gateway or the phone cannot burn it. The 3-per-day limit stays; the
+  fourth request answers "Já te enviei 3 links hoje. Podes entrar em
+  <url>/aluno/entrar com o teu número. 🙂". `proxy.ts` keeps its matcher and,
+  inside `proxy()`, lets any `/aluno/<segment>` that is not a 20+ character
+  token pass untouched, so `/aluno/entrar`, `/aluno/historico` etc. are never
+  treated as tokens.
 - Students with estado `ex_aluno` or `anonimizado` cannot log in (no code is
   sent; the generic message is shown).
-- No Supabase configured (production without secrets): `/aluno/entrar` renders;
-  both POSTs answer 503; `/aluno` 303s to `/aluno/entrar`. Add these to
-  `tests/e2e/producao.test.ts`.
+- No Supabase configured: `/aluno/entrar` renders; the POSTs answer 503;
+  `/aluno` redirects (307, what `redirect()` emits) to `/aluno/entrar`. The
+  production check (`tests/e2e/producao.test.ts`) runs **with** Supabase and
+  without the shared secrets, so it proves the other half: `/aluno` → 307,
+  `/aluno/entrar` → 200, a code request for an unknown phone writes nothing,
+  `/api/aluno/entrar` without the step-1 cookie goes back to step 1, and the
+  painel event routes answer 401.
 
 ### 5.2 Início (`/aluno`)
 
@@ -247,14 +263,16 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
 ### 5.4 Ranking (`/aluno/ranking`)
 
 - H1 "Ranking". Tabs "Este mês" (default) and "Desde sempre" (`?periodo=`).
-- All students with estado `ativo`, ordered by presences in the period, dense
-  ranking (ties share the position; the next distinct count gets the next
+- All students with estado `ativo` and `ranking_visivel = true`, ordered by
+  presences in the period, dense ranking (ties share the position; the next distinct count gets the next
   number). Row: position, **first name only** (when two share a first name, add
   the surname initial: "Ana S."), belt pill (colour + "Azul · 1 grau"), count
   "12 aulas". The logged-in student's row is highlighted and the list auto-
   scrolls to it on phones. Students with 0 presences in the period appear at
   the end with "0 aulas".
-- A header line "Estás em 4.º de 37".
+- A header line "Estás em 4.º de 37". A student Daniel hid from the ranking
+  (`ranking_visivel = false`, toggle on the painel student page) sees "Não
+  apareces no ranking." here and "—" on Início, and is not counted in the total.
 - Kids and adults share one ranking (confirmed: whole academy).
 
 ### 5.5 Calendário (`/aluno/calendario`)
@@ -271,7 +289,10 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
   360px.
 - Under the grid: "Próximos eventos" — the next 10 non-cancelled events from
   today, "sáb 8 nov · 10:00 · Seminário com … · Queluz". Events with no
-  `local_slug` are academy-wide and show "Toda a academia".
+  `local_slug` are academy-wide and show "Toda a academia". Every student sees
+  every event, labelled with its location (a Queluz seminar interests a São
+  Brás student too). Events are informational: they do not hide classes or
+  affect "Dias seguidos" (no closure type in v1).
 - Empty events: "Sem eventos marcados."
 
 ### 5.6 Definitions (pure functions in `lib/aluno/estatisticas.ts`, unit-tested)
@@ -299,8 +320,12 @@ Tokens (define once in `app/globals.css` under `@theme`, prefix `app-`):
   Aulas, Eventos, Reativação; caption "FERRAMENTAS": Perguntar, Agente. Bottom:
   Site (`/`), Sair. Greeting name is "Daniel" (one admin, password login as
   today). Avatar initials "DL".
-- **Conversations waiting** = leads whose newest message in `dlbjj_mensagens`
-  is `direction = 'in'` **and** the lead is `paused` or `status = 'humano'`.
+- **Conversations waiting** = leads that are `paused` or `status = 'humano'`
+  whose newest message in `dlbjj_mensagens` **with `role` `lead` or `humano`**
+  is `direction = 'in'`. Rows with `role = 'bot'` (login codes, system
+  messages) are ignored, so a student asking for a code does not make their
+  waiting question vanish from the badge. Login codes do appear, in clear, in
+  the thread Daniel sees (they live 10 minutes; he is the admin).
   One query, computed in `lib/painel/mensagens.ts`, used by the badge, the
   bell dot and the dashboard card.
 - Bell: dot when conversations are waiting **or** `dlbjj_sessao.estado` is not
@@ -377,6 +402,8 @@ create table if not exists dlbjj_eventos (
   updated_at    timestamptz not null default now()
 );
 create index if not exists dlbjj_eventos_dia_idx on dlbjj_eventos (dia) where cancelado_em is null;
+
+alter table dlbjj_alunos add column if not exists ranking_visivel boolean not null default true;
 ```
 
 - Anonymisation (`lib/anonimizar.ts`) also ends the student's sessions and
@@ -427,8 +454,10 @@ E2E (one per journey, `.env.test`, codes read back from `dlbjj_fila_saida`):
    class chip.
 6. Daniel: `/painel` dashboard numbers; `/painel/mensagens` list and thread;
    `/painel/eventos` create → appears on the student calendar; cancel → gone.
-7. Production check: `/aluno` → 303 `/aluno/entrar`; POSTs → 503; `/painel`
-   still 307.
+7. Production check (Supabase set, secrets missing): `/aluno` → 307
+   `/aluno/entrar`; `/aluno/entrar` 200; code request for an unknown phone →
+   303 and nothing queued; `/api/aluno/entrar` without cookie → 303 step 1;
+   `/api/painel/eventos` → 401; `/painel` still 307.
 
 Definition of done: `npm run verify` green; on a 1440px screen `/aluno` and
 `/painel` match the reference layout section by section (sidebar, top bar,
@@ -436,7 +465,29 @@ greeting + button, belt/agent card, four cards with heatmaps, academy section);
 at 375px nothing scrolls sideways and the drawer works; a screenshot of each
 is in the final message.
 
-## 10. Left to the builder
+## 10. Builder check — calls made (2026-10-20)
+
+A fresh reviewer read this document and asked nine questions. These are the
+answers, all my calls unless marked; Miguel can overrule any of them.
+
+1. **Ranking and consent.** Kids' first names, belts and counts are visible to
+   every logged-in member of the academy. Daniel gets a per-student switch
+   "Aparece no ranking" (`ranking_visivel`, default on) for anyone who objects.
+   **For Miguel:** the enrolment consent text ("para a gestão da minha
+   inscrição e das aulas") does not mention this; decide whether to add a line.
+2. **Login codes in conversations.** They stay logged through `sendOutbound`
+   (one door). "Waiting" ignores `role = 'bot'` rows (§6).
+3. **Which events a student sees.** All of them, labelled with the location.
+4. **Production check.** It runs with Supabase; see §5.1 and §9.7. 307, not 303.
+5. **Closures.** No event type in v1; events never hide classes or break streaks.
+6. **Student bell.** None.
+7. **Code volume.** Global cap of 30 codes/day; no codes while the WhatsApp
+   session is down (§5.1).
+8. **Single-use link.** GET shows a confirm page; the POST consumes (§5.1).
+9. **Logo.** `public/brand/logo.png`. The reference screenshot is committed as
+   `docs/superpowers/specs/2026-10-20-referencia-matgoat.png`.
+
+## 11. Left to the builder
 
 - Exact component split and file names under `components/app/` (shell,
   sidebar, drawer, cards, belt, heatmap) and `lib/aluno/`.
