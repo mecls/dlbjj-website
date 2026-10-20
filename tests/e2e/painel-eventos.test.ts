@@ -27,7 +27,7 @@ describe("Painel — eventos (design §6)", () => {
     html = await (await getPainel("/painel/eventos")).text();
     expect(html).toContain("cancelado");
     expect(await (await getAluno("/aluno/calendario", ana)).text()).not.toContain("Treino aberto");
-  });
+  }, 90_000); // compila a frio três rotas (eventos, calendário, edição); com a suite inteira a correr passa dos 30 s
   it("título vazio volta com erro", async () => {
     const r = await postPainel("/api/painel/eventos", { titulo: "", dia: "2026-12-01" });
     expect(r.headers.get("location")).toContain("erro=");

@@ -21,6 +21,12 @@ export async function startProdApp(): Promise<{ stop: () => Promise<void> }> {
     NEXT_PUBLIC_SUPABASE_ANON_KEY: base.NEXT_PUBLIC_SUPABASE_ANON_KEY,
     SUPABASE_SERVICE_ROLE_KEY: base.SUPABASE_SERVICE_ROLE_KEY,
     OLLAMA_FAKE: "1",
+    // Explicitamente vazios: o `next start` lê o .env.local de quem desenvolve
+    // (com os segredos de teste) e só preenche o que ainda não estiver definido.
+    // Sem isto, um .env.local no disco transforma os 503 em 401.
+    DASHBOARD_PASSWORD: "",
+    DLBJJ_WORKER_TOKEN: "",
+    CRON_SECRET: "",
   };
   execSync(`${repoRoot}node_modules/.bin/next build`, { cwd: repoRoot, env, stdio: "pipe" });
   const child: ChildProcess = spawn(`${repoRoot}node_modules/.bin/next`, ["start", "-p", String(PROD_PORT), "-H", "127.0.0.1"], {
