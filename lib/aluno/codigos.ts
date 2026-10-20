@@ -38,24 +38,31 @@ export type ResultadoCodigo = "ok" | "errado" | "bloqueado" | "nenhum";
  */
 export async function verificarCodigo(phone: string, codigo: string): Promise<ResultadoCodigo> {
   const db = serviceClient();
-  const { data: row } = await db
-    .from(TABELA)
-    .select("id,codigo_hash,tentativas")
-    .eq("phone", phone)
-    .is("usado_em", null)
-    .gt("expira_em", new Date().toISOString())
-    .order("created_at", { ascending: false })
-    .limit(1)
-    .maybeSingle();
-  if (!row) return "nenhum";
-  if (row.tentativas >= MAX_TENTATIVAS) return "bloqueado";
-  if (row.codigo_hash !== hashCodigo(phone, codigo.trim())) {
+  const hash = hashCodigo(phone, codigo.trim());
+  // Compare-and-set em ciclo: dez tentativas em paralelo contam todas (até ao
+  // teto), em vez de lerem todas "0" e escreverem todas "1".
+  for (let volta = 0; volta < 8; volta++) {
+    const { data: row } = await db
+      .from(TABELA)
+      .select("id,codigo_hash,tentativas")
+      .eq("phone", phone)
+      .is("usado_em", null)
+      .gt("expira_em", new Date().toISOString())
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
+    if (!row) return "nenhum";
+    if (row.tentativas >= MAX_TENTATIVAS) return "bloqueado";
+    if (row.codigo_hash === hash) {
+      const { data: usado } = await db.from(TABELA).update({ usado_em: new Date().toISOString() }).eq("id", row.id).is("usado_em", null).select("id");
+      return usado && usado.length > 0 ? "ok" : "nenhum";
+    }
     const tentativas = row.tentativas + 1;
-    await db.from(TABELA).update({ tentativas }).eq("id", row.id);
-    return tentativas >= MAX_TENTATIVAS ? "bloqueado" : "errado";
+    const { data: feito } = await db.from(TABELA).update({ tentativas }).eq("id", row.id).eq("tentativas", row.tentativas).select("id");
+    if (feito && feito.length > 0) return tentativas >= MAX_TENTATIVAS ? "bloqueado" : "errado";
+    // outra tentativa ganhou a corrida: lê outra vez e conta esta também
   }
-  await db.from(TABELA).update({ usado_em: new Date().toISOString() }).eq("id", row.id);
-  return "ok";
+  return "bloqueado";
 }
 
 export async function apagarCodigosDe(phone: string): Promise<void> {

@@ -12,14 +12,16 @@ beforeAll(() => {
 describe("Painel — eventos (design §6)", () => {
   it("cria, mostra ao aluno, edita e cancela", async () => {
     const dia = somarDias(hojeLisboa(), 2);
-    const r = await postPainel("/api/painel/eventos", { titulo: "Treino aberto", dia, hora: "19:00", local_slug: "sao-bras", descricao: "" });
+    const r = await postPainel("/api/painel/eventos", { titulo: "Treino aberto", dia, hora: "19:00", local_slug: "sao-bras", descricao: "Traz rashguard" });
     expect(r.status).toBe(303);
     expect(r.headers.get("location")).toBe("/painel/eventos?ok=1");
     let html = await (await getPainel("/painel/eventos")).text();
     expect(html).toContain("Treino aberto");
     expect(html).toContain("Seminário de guarda com convidado");
     const ana = await sessaoDe(FIXTURES.alunos.ana.id, FIXTURES.alunos.ana.phone);
-    expect(await (await getAluno("/aluno/calendario", ana)).text()).toContain("Treino aberto");
+    const calendario = await (await getAluno("/aluno/calendario", ana)).text();
+    expect(calendario).toContain("Treino aberto");
+    expect(calendario).toContain("Traz rashguard"); // a descrição que o Daniel escreve é para os alunos lerem
     const { data } = await sb.from("dlbjj_eventos").select("id").eq("titulo", "Treino aberto").single();
     await postPainel(`/api/painel/eventos/${data!.id}`, { titulo: "Treino aberto a todos", dia, hora: "19:00", local_slug: "", descricao: "" });
     expect(await (await getPainel(`/painel/eventos?editar=${data!.id}`)).text()).toContain('value="Treino aberto a todos"');

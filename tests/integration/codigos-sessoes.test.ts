@@ -28,6 +28,13 @@ describe("códigos de login", () => {
     expect(await verificarCodigo("351920000003", "111111")).toBe("bloqueado");
     expect(await verificarCodigo("351920000003", codigo)).toBe("bloqueado");
   });
+  it("dez tentativas erradas em paralelo contam todas (até ao teto de 5)", async () => {
+    await emitirCodigo("351920000009");
+    const resultados = await Promise.all(Array.from({ length: 10 }, () => verificarCodigo("351920000009", "000000")));
+    expect(resultados.every((r) => r === "errado" || r === "bloqueado")).toBe(true);
+    const { data } = await sb.from("dlbjj_codigos_login").select("tentativas").eq("phone", "351920000009").order("created_at", { ascending: false }).limit(1).single();
+    expect(data!.tentativas).toBe(5);
+  });
   it("expirado é como se não existisse", async () => {
     const codigo = await emitirCodigo("351920000001");
     await sb.from("dlbjj_codigos_login").update({ expira_em: new Date(Date.now() - 1000).toISOString() }).eq("phone", "351920000001");

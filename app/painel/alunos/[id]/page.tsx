@@ -49,7 +49,7 @@ export default async function AlunoPage({ params, searchParams }: { params: Prom
           </div>
           <p className="text-sm text-app-muted">
             {a.phone} ·{" "}
-            <Link href={`/painel/${a.phone}`} className="hover:underline">
+            <Link href={`/painel/mensagens/${a.phone}`} className="hover:underline">
               conversa
             </Link>
           </p>

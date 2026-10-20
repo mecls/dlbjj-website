@@ -86,6 +86,25 @@ describe("Entrar na área de aluno (design §5.1)", () => {
     expect((await getAluno("/aluno", sessao)).status).toBe(307);
     await sb.from("dlbjj_alunos").update({ estado: "ativo" }).eq("id", rui.id);
   });
+  it("o teto global só conta códigos enviados e, esgotado, cala-se sem revelar quem é aluno", async () => {
+    const { ana } = FIXTURES.alunos;
+    await sb.from("dlbjj_limites").upsert({ chave: "codigo-global:academia:86400", contagem: 30, expira_em: new Date(Date.now() + 3_600_000).toISOString() }, { onConflict: "chave" });
+    const antes = (await filaDe(sb, ana.phone)).length;
+    const { r } = await pedirCodigo(ana.phone);
+    expect(r.headers.get("location")).toContain("passo=codigo"); // nunca "erro=limite": um estranho não pode fechar a porta a todos
+    expect((await filaDe(sb, ana.phone)).length).toBe(antes); // mas não saiu código
+    await sb.from("dlbjj_limites").delete().eq("chave", "codigo-global:academia:86400");
+  });
+  it("vinte códigos errados do mesmo IP em 15 minutos travam o passo 2", async () => {
+    const { rui } = FIXTURES.alunos;
+    await sb.from("dlbjj_limites").delete().like("chave", "entrar-ip:%");
+    const { entrar } = await pedirCodigo(rui.phone);
+    const locs: string[] = [];
+    for (let i = 0; i < 21; i++) locs.push((await postAluno("/api/aluno/entrar", { codigo: "999999" }, entrar)).headers.get("location") ?? "");
+    expect(locs[0]).toContain("erro=codigo");
+    expect(locs[19]).toContain("erro=bloqueado");
+    expect(locs[20]).toContain("erro=limite");
+  });
   it("a página de entrar renderiza sem sessão", async () => {
     const html = await (await fetch(`${E2E_URL}/aluno/entrar`)).text();
     expect(html).toContain("Enviar código");

@@ -24,7 +24,7 @@ function Chips({ c }: { c: CelulaCalendario }) {
         <span key={a.id} className="block truncate rounded bg-app-soft px-1.5 py-0.5 text-[11px] leading-4 text-app-text">{`${a.horario} ${a.turma}`}</span>
       ))}
       {c.eventos.map((e) => (
-        <span key={e.id} className="block truncate rounded border border-app-accent px-1.5 py-0.5 text-[11px] leading-4 text-app-accent" title={e.titulo}>
+        <span key={e.id} className="block truncate rounded border border-app-accent px-1.5 py-0.5 text-[11px] leading-4 text-app-accent" title={e.descricao ? `${e.titulo} — ${e.descricao}` : e.titulo}>
           {e.titulo}
         </span>
       ))}
@@ -104,7 +104,10 @@ export default async function CalendarioAluno({ searchParams }: { searchParams?:
         ) : (
           <Card className="divide-y divide-app-border">
             {proximos.map((e) => (
-              <p key={e.id} className="px-4 py-2.5 text-sm">{[diaCurto(e.dia), e.hora ?? "—", e.titulo, localNome(e.local_slug)].join(" · ")}</p>
+              <div key={e.id} className="px-4 py-2.5 text-sm">
+                <p>{[diaCurto(e.dia), e.hora ?? "—", e.titulo, localNome(e.local_slug)].join(" · ")}</p>
+                {e.descricao ? <p className="mt-0.5 text-app-muted">{e.descricao}</p> : null}
+              </div>
             ))}
           </Card>
         )}

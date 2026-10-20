@@ -64,6 +64,7 @@ describe("Painel — alunos", () => {
     const { data } = await sb.from("dlbjj_graduacoes").select("faixa").eq("aluno_id", ana.id);
     expect(data).toHaveLength(4);
     const html = await (await getPainel(`/painel/alunos/${ana.id}`)).text();
+    expect(html).toContain(`href="/painel/mensagens/${ana.phone}"`); // a ligação à conversa segue os caminhos novos
     expect(html).toContain("Roxa");
   });
 

@@ -3,6 +3,7 @@ import { alunosDoTelefone } from "@/lib/alunos/consultas";
 import { verificarCodigo } from "@/lib/aluno/codigos";
 import { COOKIE_ENTRAR, COOKIE_SESSAO, criarSessao, opcoesCookie, VALIDADE_SESSAO_DIAS } from "@/lib/aluno/sessao";
 import { supabaseConfigured } from "@/lib/config";
+import { ipDe, permitido } from "@/lib/limites";
 
 export const runtime = "nodejs";
 
@@ -12,6 +13,7 @@ export async function POST(req: NextRequest) {
   const phone = req.cookies.get(COOKIE_ENTRAR)?.value;
   const ir = (q: string) => NextResponse.redirect(new URL(`/aluno/entrar${q}`, req.url), 303);
   if (!phone) return ir("");
+  if (!(await permitido("entrar-ip", ipDe(req.headers), 20, 900))) return ir("?passo=codigo&erro=limite");
 
   const fd = await req.formData();
   const resultado = await verificarCodigo(phone, String(fd.get("codigo") ?? ""));

@@ -138,6 +138,7 @@ export interface EventoCalendario {
   dia: string;
   hora: string | null;
   local_slug: string | null;
+  descricao?: string | null;
 }
 
 export interface CelulaCalendario {
