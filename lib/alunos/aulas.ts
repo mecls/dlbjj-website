@@ -8,13 +8,18 @@ export interface LinhaRanking extends TurmaRow {
   alunos: number;
 }
 
-/** Turmas ativas ordenadas por presenças no período, com alunos distintos. */
+/** Turmas ativas ordenadas por presenças nos últimos `dias` dias, com alunos distintos. */
 export async function rankingAulas(dias: number): Promise<LinhaRanking[]> {
+  const hoje = hojeLisboa();
+  return rankingAulasEntre(somarDias(hoje, -dias), hoje);
+}
+
+/** O mesmo ranking num intervalo de dias (inclusive dos dois lados). */
+export async function rankingAulasEntre(desde: string, ate: string): Promise<LinhaRanking[]> {
   const db = serviceClient();
-  const desde = somarDias(hojeLisboa(), -dias);
   const [{ data: turmas }, { data: presencas }] = await Promise.all([
     db.from("dlbjj_turmas").select("*").eq("ativa", true),
-    db.from("dlbjj_presencas").select("turma_id,aluno_id").gte("data", desde),
+    db.from("dlbjj_presencas").select("turma_id,aluno_id").gte("data", desde).lte("data", ate),
   ]);
   const porTurma = new Map<string, { n: number; alunos: Set<string> }>();
   for (const p of presencas ?? []) {

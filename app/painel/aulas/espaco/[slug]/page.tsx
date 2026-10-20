@@ -3,10 +3,11 @@ import { notFound } from "next/navigation";
 import { localPorSlug } from "@/content/site";
 import { Card, PageHeader } from "@/components/painel/ui";
 import { requireAuth } from "@/lib/auth";
-import { rankingAulas, type LinhaRanking } from "@/lib/alunos/aulas";
+import { rankingAulasEntre, type LinhaRanking } from "@/lib/alunos/aulas";
+import { periodoDe } from "@/lib/aulas/periodo";
+import { SeletorPeriodo } from "@/components/painel/seletor-periodo";
 import { grelhaSemanal } from "@/lib/aulas/grelha";
-import { NOME_DIA } from "@/lib/tempo";
-import { cn } from "@/lib/utils";
+import { NOME_DIA, hojeLisboa } from "@/lib/tempo";
 
 export const dynamic = "force-dynamic";
 
@@ -21,30 +22,24 @@ function Bloco({ t }: { t: LinhaRanking }) {
 }
 
 /** O horário semanal de um espaço (ajustes §2.4): horas em baixo, dias ao lado, um bloco por turma. */
-export default async function EspacoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ dias?: string }> }) {
+export default async function EspacoPage({ params, searchParams }: { params: Promise<{ slug: string }>; searchParams?: Promise<{ dias?: string; desde?: string; ate?: string }> }) {
   await requireAuth();
   const { slug } = await params;
   const local = localPorSlug(slug);
   if (!local) notFound();
-  const { dias } = (await searchParams) ?? {};
-  const periodo = dias === "90" ? 90 : 30;
-  const turmas = (await rankingAulas(periodo)).filter((t) => t.local_slug === slug);
+  const periodo = periodoDe((await searchParams) ?? {}, hojeLisboa());
+  const turmas = (await rankingAulasEntre(periodo.desde, periodo.ate)).filter((t) => t.local_slug === slug);
   const g = grelhaSemanal(turmas);
 
   return (
     <div className="space-y-6">
-      <Link href={`/painel/aulas?dias=${periodo}`} className="text-sm text-app-muted hover:underline">
+      <Link href={`/painel/aulas?${periodo.query}`} className="text-sm text-app-muted hover:underline">
         ← Aulas
       </Link>
       <PageHeader titulo={local.nome}>
-        <div className="flex gap-1 rounded-lg border border-app-border p-1 text-sm">
-          {[30, 90].map((d) => (
-            <Link key={d} href={`/painel/aulas/espaco/${slug}?dias=${d}`} className={cn("rounded-md px-3 py-1.5", periodo === d ? "bg-app-soft font-medium" : "text-app-muted hover:text-app-text")}>
-              {d} dias
-            </Link>
-          ))}
-        </div>
+        <SeletorPeriodo base={`/painel/aulas/espaco/${slug}`} periodo={periodo} />
       </PageHeader>
+      <p className="text-sm text-app-muted">{`Presenças: ${periodo.rotulo}`}</p>
 
       {turmas.length === 0 ? (
         <Card className="p-8 text-center text-sm text-app-muted">Sem turmas ativas neste espaço.</Card>

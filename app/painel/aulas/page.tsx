@@ -2,17 +2,18 @@ import Link from "next/link";
 import { localPorSlug } from "@/content/site";
 import { Icone } from "@/components/app/icones";
 import { Card, PageHeader } from "@/components/painel/ui";
+import { SeletorPeriodo } from "@/components/painel/seletor-periodo";
+import { periodoDe } from "@/lib/aulas/periodo";
+import { hojeLisboa } from "@/lib/tempo";
 import { requireAuth } from "@/lib/auth";
 import { resumoPorEspaco } from "@/lib/aulas/espacos";
-import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
 /** Aulas (ajustes §2.4): um cartão por espaço; dentro, o horário semanal. */
-export default async function AulasPage({ searchParams }: { searchParams?: Promise<{ dias?: string }> }) {
+export default async function AulasPage({ searchParams }: { searchParams?: Promise<{ dias?: string; desde?: string; ate?: string }> }) {
   await requireAuth();
-  const { dias } = (await searchParams) ?? {};
-  const periodo = dias === "90" ? 90 : 30;
+  const periodo = periodoDe((await searchParams) ?? {}, hojeLisboa());
   const { espacos, ranking } = await resumoPorEspaco(periodo);
   const top = ranking[0];
   const total = ranking.reduce((s, t) => s + t.presencas, 0);
@@ -20,18 +21,12 @@ export default async function AulasPage({ searchParams }: { searchParams?: Promi
   return (
     <div className="space-y-6">
       <PageHeader titulo="Aulas">
-        <div className="flex gap-1 rounded-lg border border-app-border p-1 text-sm">
-          {[30, 90].map((d) => (
-            <Link key={d} href={`/painel/aulas?dias=${d}`} className={cn("rounded-md px-3 py-1.5", periodo === d ? "bg-app-soft font-medium" : "text-app-muted hover:text-app-text")}>
-              {d} dias
-            </Link>
-          ))}
-        </div>
+        <SeletorPeriodo base="/painel/aulas" periodo={periodo} />
       </PageHeader>
 
       <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
         {espacos.map((e) => (
-          <Link key={e.slug} href={`/painel/aulas/espaco/${e.slug}?dias=${periodo}`} className="block">
+          <Link key={e.slug} href={`/painel/aulas/espaco/${e.slug}?${periodo.query}`} className="block">
             <Card className="h-full p-6 transition hover:border-app-icon/40">
               <div className="flex items-center gap-3">
                 <Icone nome="aulas" className="size-7 text-app-icon" />
@@ -41,7 +36,7 @@ export default async function AulasPage({ searchParams }: { searchParams?: Promi
               <dl className="mt-5 grid grid-cols-3 gap-2 text-center">
                 {[
                   [e.turmas, "turmas"],
-                  [e.presencas, `presenças (${periodo} dias)`],
+                  [e.presencas, `presenças (${periodo.rotulo})`],
                   [e.alunosAtivos, "alunos ativos"],
                 ].map(([n, r]) => (
                   <div key={String(r)}>

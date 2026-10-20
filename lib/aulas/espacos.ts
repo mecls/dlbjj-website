@@ -1,7 +1,8 @@
 import "server-only";
 import { locais } from "@/content/site";
 import { serviceClient } from "@/lib/supabase/service";
-import { rankingAulas, type LinhaRanking } from "@/lib/alunos/aulas";
+import { rankingAulasEntre, type LinhaRanking } from "@/lib/alunos/aulas";
+import type { Periodo } from "./periodo";
 
 export interface ResumoEspaco {
   slug: string;
@@ -13,9 +14,9 @@ export interface ResumoEspaco {
 }
 
 /** Um cartão por espaço com turmas ativas (ajustes §2.4), na ordem de content/site.ts. */
-export async function resumoPorEspaco(dias: number): Promise<{ espacos: ResumoEspaco[]; ranking: LinhaRanking[] }> {
+export async function resumoPorEspaco(periodo: Periodo): Promise<{ espacos: ResumoEspaco[]; ranking: LinhaRanking[] }> {
   const [ranking, { data: alunos }] = await Promise.all([
-    rankingAulas(dias),
+    rankingAulasEntre(periodo.desde, periodo.ate),
     serviceClient().from("dlbjj_alunos").select("local_slug").eq("estado", "ativo"),
   ]);
   const ativosPor = new Map<string, number>();

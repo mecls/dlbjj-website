@@ -2,6 +2,7 @@ import { beforeAll, describe, expect, it } from "vitest";
 import { db, FIXTURES, resetDb } from "../helpers/db";
 import { filaDe } from "../helpers/app";
 import { getPainel, postPainel } from "../helpers/painel";
+import { hojeLisboa, somarDias } from "@/lib/tempo";
 
 const sb = db();
 const ana = FIXTURES.alunos.ana;
@@ -144,6 +145,20 @@ describe("Painel — aulas", () => {
     const t = await turmaId("sao-bras|Jiu-Jitsu|Segunda e Quarta|19:30");
     expect(html).toContain(`href="/painel/aulas/${t}`);
     expect((await getPainel("/painel/aulas/espaco/nao-existe")).status).toBe(404);
+  });
+
+  it("o período tem hoje, 7, 30, 90 dias e um intervalo à escolha, e passa para o espaço", async () => {
+    let html = await (await getPainel("/painel/aulas?dias=hoje")).text();
+    expect(html).toContain("presenças (hoje)");
+    expect(html).toContain('href="/painel/aulas/espaco/sao-bras?dias=hoje"');
+    for (const r of ["Hoje", "7 dias", "30 dias", "90 dias", "Personalizado"]) expect(html, r).toContain(r);
+    const hoje = hojeLisboa();
+    const desde = somarDias(hoje, -3);
+    const ate = somarDias(hoje, -1);
+    html = await (await getPainel(`/painel/aulas/espaco/queluz?desde=${desde}&ate=${ate}`)).text();
+    expect(html).toContain("2 presenças · 1 alunos"); // o Rui há 1 e há 3 dias
+    expect(html).toContain(`value="${desde}"`);
+    expect(await (await getPainel("/painel/aulas?desde=2026-13-01&ate=2026-10-10")).text()).toContain("presenças (30 dias)");
   });
 
   it("um espaço sem turmas ativas diz-o", async () => {
