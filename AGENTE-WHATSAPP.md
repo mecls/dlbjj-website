@@ -13,7 +13,7 @@ VPS em `docker/README.md`.
 
 1. **Criar o projeto Supabase dedicado da DL-BJJ** e correr, por ordem, no SQL
    Editor: `supabase/migrations/001_dlbjj_onboarding.sql`, `002_dlbjj_rls.sql`,
-   `003_dlbjj_alunos.sql`, `004_dlbjj_correcoes.sql`, `005_dlbjj_area_aluno.sql` (todas idempotentes). Depois `npm run seed:turmas`
+   `003_dlbjj_alunos.sql`, `004_dlbjj_correcoes.sql`, `005_dlbjj_area_aluno.sql`, `006_dlbjj_painel_ajustes.sql` (todas idempotentes). Depois `npm run seed:turmas`
    com `.env.local` a apontar para lá (semeia as 14 turmas de `content/site.ts`).
 2. **Variáveis na Vercel**: as de `.env.example` — Supabase (3),
    `OLLAMA_API_KEY`, `APP_BASE_URL=https://www.dlbjj.org`, `DLBJJ_WORKER_TOKEN`,
@@ -167,6 +167,12 @@ do plano Team.** Em cada chamada ao modelo saem: o texto da mensagem da pessoa,
 o primeiro nome e o passo da conversa (onboarding); a pergunta do Daniel e as
 linhas que a ferramenta devolveu (painel Perguntar — nunca encarregado, saúde,
 contactos, NIF, morada, email, telemóvel ou nascimento).
+
+Além disso, no painel, o botão **«Escrever resumo»** de uma conversa envia o
+texto dessa conversa (os dois lados, incluindo o que foi dito enquanto o Daniel
+a tinha assumido; códigos de login e links com token são escondidos antes) ao
+mesmo modelo, para escrever duas frases sobre onde a conversa está e o que a
+pessoa quer. É o Daniel que decide quando carregar; nada da ficha do aluno sai.
 
 O responsável pelo tratamento é a academia. Antes da primeira conversa real, o
 Daniel tem de ser informado disto por escrito. Alternativas: um modelo

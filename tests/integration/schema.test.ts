@@ -137,3 +137,12 @@ describe("005_dlbjj_area_aluno", () => {
     expect(ana!.ranking_visivel).toBe(true);
   });
 });
+
+describe("006_dlbjj_painel_ajustes", () => {
+  it("tem a tabela dos resumos, uma linha por lead", async () => {
+    const r = await sb.from("dlbjj_resumos").insert({ lead_id: FIXTURES.leads.novo.id, situacao: "x", quer: "y", mensagens: 1, ate: new Date().toISOString() });
+    expect(r.error).toBeNull();
+    const dup = await sb.from("dlbjj_resumos").insert({ lead_id: FIXTURES.leads.novo.id, situacao: "x", quer: "y", mensagens: 1, ate: new Date().toISOString() });
+    expect(dup.error?.code).toBe("23505");
+  });
+});

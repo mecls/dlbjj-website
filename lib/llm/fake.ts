@@ -41,3 +41,13 @@ export function interpretFake(text: string): NluResult {
   };
   return { ...base, ...(TABELA[chave] ?? {}) };
 }
+
+/**
+ * O "modelo" do resumo da conversa nos testes: ecoa a última mensagem da
+ * pessoa (já redigida). `[[lixo]]` na mensagem faz o fake devolver algo que
+ * não é JSON, para testar o caminho de erro.
+ */
+export function resumoFake(ultima: string): string {
+  if (ultima.includes("[[lixo]]")) return "isto não é json";
+  return JSON.stringify({ situacao: `A pessoa escreveu "${ultima.slice(0, 60)}" e a conversa está a meio.`, quer: "Saber mais sobre as aulas." });
+}
